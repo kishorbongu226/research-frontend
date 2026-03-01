@@ -1,0 +1,363 @@
+/* ======= Header (Navbar) ======= */
+.header {
+    background-color: #831238;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+/* Left Section (Menu Icon + Logo) */
+.left-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.menu-icon {
+    cursor: pointer;
+    color: white;
+    font-size: 24px;
+    transition: color 0.3s ease;
+}
+
+.menu-icon:hover {
+    color: #f3a6b0;
+}
+
+.logo-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.logo-image {
+    width: 200px;
+    height: auto;
+    max-height: 50px;
+    object-fit: contain;
+}
+
+/* Center Navigation Links */
+.nav {
+    display: flex;
+    gap: 1rem;
+    margin-left: auto;
+}
+
+.nav-link {
+    color: white;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #f3a6b0;
+}
+
+/* Right Section (Profile Icon) */
+.right-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.profile-icon {
+    cursor: pointer;
+    color: white;
+    font-size: 24px;
+    transition: color 0.3s ease;
+}
+
+.profile-icon:hover {
+    color: #f3a6b0;
+}
+
+/* ======= Popup Menus ======= */
+.menu-popup {
+    position: absolute;
+    top: 60px;
+    left: 10px;
+    background: #831238;
+    box-shadow: 0px 4px 8px rgba(244, 240, 240, 0.1);
+    border-radius: 5px;
+    padding: 10px;
+    z-index: 100;
+    width: 180px;
+    display: flex;
+    flex-direction: column;
+    color: white;
+}
+
+.menu-popup .popup-item {
+    color: white !important;
+    background: transparent;
+    border: none;
+    text-align: left;
+    font-size: 14px;
+    padding: 8px;
+    cursor: pointer;
+}
+
+.profile-popup {
+    position: absolute;
+    top: 60px;
+    right: 10px;
+    background: #831238;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    z-index: 100;
+    width: 180px;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-popup .popup-item {
+    color: white !important;
+    background: transparent;
+    border: none;
+    text-align: left;
+    font-size: 16px;
+    padding: 10px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.profile-popup .popup-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+}
+
+/* ======= News Section ======= */
+.news-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 20px auto;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.news-title {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.news-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Fix alignment: Move news items to start from the left */
+.news-item-news {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border-left: 5px solid transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: flex-start;
+    position: relative; /* ✅ Ensure it acts as a reference for absolute positioning */
+}
+
+
+
+/* Title */
+.title-news {
+    margin-right: 200px;
+}
+.news-item h4 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 3px;
+    text-align: left;
+}
+
+/* Completion Date */
+.news-meta {
+    font-size: 14px;
+    font-weight: bold;
+    color: #d9534f;
+    text-align: left;
+}
+
+/* Description */
+.news-description {
+    font-size: 14px;
+    color: #555;
+    text-align: left;
+}
+
+/* Buttons */
+.news-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.news-actions-news {
+    position: absolute; /* ✅ Position it relative to .news-item-news */
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 10px;
+}
+.news-item {
+    position: relative; /* Ensure it acts as a reference for absolute positioning */
+    padding-right: 40px; /* Give space for the icons */
+}
+
+.edit-icon-news, .delete-icon-news {
+    cursor: pointer;
+    color: #007bff;
+    transition: color 0.3s;
+    gap: 1rem;
+  }
+  
+  .edit-icon-news:hover {
+    color: #0056b3;
+  }
+  
+  .delete-icon-news {
+    color: red;
+  }
+  
+  .delete-icon-news:hover {
+    color: darkred;
+  }
+  
+
+
+.add-button-news {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* Modal Styles */
+.modal-overlay-news {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-news {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    padding: 50px;
+    width: 400px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    position: relative;
+    
+    
+}
+
+.modal-header-news {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 45px;
+}
+
+.close-icon-news {
+    cursor: pointer;
+    color: #333;
+    transition: color 0.3s;
+    
+    
+}
+
+.close-icon-news:hover {
+    color: red;
+}
+
+.modal-input, .modal-textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.modal-textarea {
+    height: 80px;
+    resize: none;
+}
+
+.submit-button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    margin-top:10px;
+}
+
+.submit-button:hover {
+    background: #0056b3;
+}
+/* Delete Confirmation Modal */
+.delete-modal-news {
+    background: white;
+    padding: 70px;
+    width: 350px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    position: relative;
+}
+
+.delete-actions-news {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 5px;
+}
+
+.delete-confirm-news {
+    background: red;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.delete-cancel-news {
+    background: gray;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+}

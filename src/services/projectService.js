@@ -2,12 +2,27 @@ import axios from "axios";
 
 const BASE_URL = "http://localhost:8080/api/v1.0";
 
+// Helper to get Basic Auth header from sessionStorage
+const getAuthHeader = () => {
+  const auth = sessionStorage.getItem("auth");
+  if (auth) {
+    const { basicAuth } = JSON.parse(auth);
+    return { Authorization: basicAuth };
+  }
+  return {};
+};
+
 const projectService = {
   getProjectsByCenter: async (centerId) => {
-    return await axios.get(`${BASE_URL}/center/${centerId}`);
+    return await axios.get(`${BASE_URL}/center/${centerId}`, {
+      headers: getAuthHeader(),
+    });
   },
+
   getProjectById: async (projectId) => {
-    return await axios.get(`${BASE_URL}/project/${projectId}`);
+    return await axios.get(`${BASE_URL}/project/${projectId}`, {
+      headers: getAuthHeader(),
+    });
   },
 
   createProject: async (projectData, file) => {
@@ -16,7 +31,10 @@ const projectService = {
     formData.append("file", file);
 
     return await axios.post(`${BASE_URL}/projects/add`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+      headers: { 
+        ...getAuthHeader(),
+        "Content-Type": "multipart/form-data",
+      },
     });
   },
 
@@ -26,11 +44,17 @@ const projectService = {
     formData.append("file", file);
 
     return await axios.post(`${BASE_URL}/student/apply`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+      headers: { 
+        ...getAuthHeader(),
+        "Content-Type": "multipart/form-data",
+      },
     });
   },
+
   getAllProjects: async () => {
-    return await axios.get(`${BASE_URL}/projects`);
+    return await axios.get(`${BASE_URL}/projects`, {
+      headers: getAuthHeader(),
+    });
   },
 };
 

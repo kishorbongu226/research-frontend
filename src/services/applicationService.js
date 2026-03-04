@@ -2,28 +2,44 @@ import axios from "axios";
 
 const BASE_URL = "http://localhost:8080/api/v1.0";
 
+const getAuthHeader = () => {
+  const auth = sessionStorage.getItem("auth");
+  if (auth) {
+    const { basicAuth } = JSON.parse(auth);
+    return { Authorization: basicAuth };
+  }
+  return {};
+};
+
 const applicationService = {
-  approveApplication: async (applicationId, professorId) => {
+  approveApplication: async (applicationId) => {
     return await axios.put(
       `${BASE_URL}/application/${applicationId}/APPROVE`,
-      null,
-      { params: { professorId } },
+      {},
+      { headers: getAuthHeader() }
     );
   },
 
-  declineApplication: async (applicationId, professorId) => {
+  declineApplication: async (applicationId) => {
     return await axios.put(
       `${BASE_URL}/application/${applicationId}/DECLINE`,
-      null,
-      { params: { professorId } },
+      {},
+      { headers: getAuthHeader() }
     );
   },
 
-  getPendingApplications: async (professorId) => {
-    return await axios.get(`${BASE_URL}/applications/pending/${professorId}`);
+  getPendingApplications: async () => {
+    return await axios.get(
+      `${BASE_URL}/applications/pending/`,
+      { headers: getAuthHeader() }
+    );
   },
-  getApprovedApplications: async (professorId) => {
-    return await axios.get(`${BASE_URL}/applications/approved/${professorId}`);
+
+  getApprovedApplications: async () => {
+    return await axios.get(
+      `${BASE_URL}/applications/approved/`,
+      { headers: getAuthHeader() }
+    );
   },
 };
 

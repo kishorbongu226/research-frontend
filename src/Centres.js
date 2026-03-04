@@ -634,10 +634,10 @@ const SidebarFacilities = ({ facilityList }) => {
             style={
               facility.matched
                 ? {
-                    borderLeft: "3px solid #800020",
-                    background: "#fff8f9",
-                    color: "#2d3748",
-                  }
+                  borderLeft: "3px solid #800020",
+                  background: "#fff8f9",
+                  color: "#2d3748",
+                }
                 : hasQuery
                   ? { opacity: 0.45 }
                   : {}
@@ -1390,7 +1390,7 @@ const AddProjectDialog = ({ centerId, onClose, onSuccess }) => {
     responsibilities: "",
     skillRequirements: "",
     projectStatus: "PROJECTS_AVAILABLE",
-    professorId: "",
+    
   });
 
   const [file, setFile] = useState(null);
@@ -1427,11 +1427,7 @@ const AddProjectDialog = ({ centerId, onClose, onSuccess }) => {
             placeholder="Title"
             onChange={(e) => setForm({ ...form, title: e.target.value })}
           />
-          <input
-            className="form-input"
-            placeholder="Professor Register No"
-            onChange={(e) => setForm({ ...form, professorId: e.target.value })}
-          />
+       
           <textarea
             className="form-input form-textarea"
             placeholder="Description"
@@ -1442,6 +1438,13 @@ const AddProjectDialog = ({ centerId, onClose, onSuccess }) => {
             placeholder="Skill Requirements"
             onChange={(e) =>
               setForm({ ...form, skillRequirements: e.target.value })
+            }
+          />
+          <input
+            className="form-input"
+            placeholder="responsibilities"
+            onChange={(e) =>
+              setForm({ ...form, responsibilities: e.target.value })
             }
           />
           <input type="file" onChange={(e) => setFile(e.target.files[0])} />

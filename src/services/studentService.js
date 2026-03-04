@@ -2,10 +2,22 @@ import axios from "axios";
 
 const API = "http://localhost:8080/api/v1.0";
 
-const getStudent = (registerNo) => {
-  return axios.get(`${API}/student/profile/${registerNo}`);
+// Helper to get Basic Auth header from sessionStorage
+const getAuthHeader = () => {
+  const auth = sessionStorage.getItem("auth");
+  if (auth) {
+    const { basicAuth } = JSON.parse(auth);
+    return { Authorization: basicAuth };
+  }
+  return {};
 };
 
-export default {
-  getStudent,
+const studentService = {
+  getStudent: (registerNo) => {
+    return axios.get(`${API}/student/profile/${registerNo}`, {
+      headers: getAuthHeader(),
+    });
+  },
 };
+
+export default studentService;

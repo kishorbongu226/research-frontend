@@ -24,6 +24,11 @@ const projectService = {
       headers: getAuthHeader(),
     });
   },
+  getStudentsByProject: async (projectId) => {
+    return await axios.get(`${BASE_URL}/project/${projectId}/students`, {
+      headers: getAuthHeader(),
+    });
+  },
 
   createProject: async (projectData, file) => {
     const formData = new FormData();
@@ -31,7 +36,7 @@ const projectService = {
     formData.append("file", file);
 
     return await axios.post(`${BASE_URL}/projects/add`, formData, {
-      headers: { 
+      headers: {
         ...getAuthHeader(),
         "Content-Type": "multipart/form-data",
       },
@@ -44,7 +49,7 @@ const projectService = {
     formData.append("file", file);
 
     return await axios.post(`${BASE_URL}/student/apply`, formData, {
-      headers: { 
+      headers: {
         ...getAuthHeader(),
         "Content-Type": "multipart/form-data",
       },

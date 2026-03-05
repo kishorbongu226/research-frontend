@@ -4,39 +4,6 @@ import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import projectService from "./services/projectService";
 
-const defaultStudents = [
-  {
-    name: "Rahul Kumar",
-    dept: "Biotechnology",
-    year: "3rd Year",
-    img: "https://randomuser.me/api/portraits/men/32.jpg",
-  },
-  {
-    name: "Ananya Reddy",
-    dept: "Nanotechnology",
-    year: "2nd Year",
-    img: "https://randomuser.me/api/portraits/women/44.jpg",
-  },
-  {
-    name: "Vishal Singh",
-    dept: "Biotechnology",
-    year: "1st Year",
-    img: "https://randomuser.me/api/portraits/men/56.jpg",
-  },
-  {
-    name: "Priya Sharma",
-    dept: "Chemistry",
-    year: "3rd Year",
-    img: "https://randomuser.me/api/portraits/women/68.jpg",
-  },
-  {
-    name: "Rahul Kumar",
-    dept: "Nanotechnology",
-    year: "4th Year",
-    img: "https://randomuser.me/api/portraits/men/42.jpg",
-  },
-];
-
 const defaultMembers = [
   { name: "Dr. A. Sharma", role: "Head" },
   { name: "Dr. S. Patel", role: "Reaseach Scientist" },
@@ -74,7 +41,7 @@ const Project = () => {
   const [members, setMembers] = useState([]);
   const [responsibilities, setResponsibilities] = useState([]);
   const [skills, setSkills] = useState([]);
-  const [involvedStudents, setInvolvedStudents] = useState(defaultStudents);
+  const [involvedStudents, setInvolvedStudents] = useState([]);
   const [totalStudents, setTotalStudents] = useState(6);
   const [imageUrl, setImageUrl] = useState("");
 
@@ -137,7 +104,6 @@ const Project = () => {
         setMembers([{ name: data.directorName, role: "Director" }]);
         setImageUrl(data.imageUrl);
 
-        // 🔥 Convert comma-separated string → array
         setResponsibilities(
           data.responsibilities
             ? data.responsibilities.split(",").map((item) => item.trim())
@@ -149,6 +115,19 @@ const Project = () => {
             ? data.skillRequirements.split(",").map((item) => item.trim())
             : [],
         );
+
+        // 🔥 NEW API CALL
+        const studentsRes =
+          await projectService.getStudentsByProject(projectId);
+
+        const students = studentsRes.data.map((s) => ({
+          name: s.name,
+          dept: s.branch,
+          year: s.year,
+          img: s.profileImageUrl,
+        }));
+
+        setInvolvedStudents(students);
       } catch (error) {
         console.error("Error fetching project:", error);
       }

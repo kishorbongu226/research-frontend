@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+
 import {
   Menu,
   Bell,
@@ -22,6 +23,7 @@ import { useParams } from "react-router-dom";
 import centerService from "./services/centerService";
 import projectService from "./services/projectService";
 import { useNavigate } from "react-router-dom";
+import professorService from "./services/professorService";
 
 // Comprehensive mock data
 
@@ -634,10 +636,10 @@ const SidebarFacilities = ({ facilityList }) => {
             style={
               facility.matched
                 ? {
-                  borderLeft: "3px solid #800020",
-                  background: "#fff8f9",
-                  color: "#2d3748",
-                }
+                    borderLeft: "3px solid #800020",
+                    background: "#fff8f9",
+                    color: "#2d3748",
+                  }
                 : hasQuery
                   ? { opacity: 0.45 }
                   : {}
@@ -681,6 +683,7 @@ const Centres = () => {
   const [showEditDropdown, setShowEditDropdown] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const editDropdownRef = useRef(null);
+  const [teamProfiles, setTeamProfiles] = useState([]);
 
   // Facilities edit state
   const [showFacilitiesDropdown, setShowFacilitiesDropdown] = useState(false);
@@ -699,9 +702,17 @@ const Centres = () => {
         const centerRes = await centerService.getCenterById(centerId);
         console.log("CENTER DETAILS:", centerRes.data);
         const projectRes = await projectService.getProjectsByCenter(centerId);
-
+        const professorRes = await professorService.getAdminProfessors();
         setCenterData(centerRes.data);
         setProjects(projectRes.data);
+        const professors = professorRes.data.map((prof) => ({
+          id: prof.id,
+          name: prof.name,
+          designation: prof.occupation,
+          image: prof.imageUrl,
+        }));
+
+        setTeamProfiles(professors);
       } catch (err) {
         console.error("Error loading center:", err);
       } finally {
@@ -1247,19 +1258,19 @@ const Centres = () => {
                 <h1>{centerData.centerName}</h1>
                 <p>{centerData.centerDescription}</p>
               </div>
-              <div style={{ marginTop: 20 }}>
-                <h3>Director Details</h3>
-                <p>
-                  <strong>Name:</strong> {centerData.professorName}
-                </p>
-                <p>
-                  <strong>Occupation:</strong> {centerData.professorOccupation}
-                </p>
-              </div>
             </div>
+            {/* <div style={{ marginTop: 20 }}>
+              <h3>Director Details</h3>
+              <p>
+                <strong>Name:</strong> {centerData.professorName}
+              </p>
+              <p>
+                <strong>Occupation:</strong> {centerData.professorOccupation}
+              </p>
+            </div> */}
 
             {/* Team Profiles */}
-            {/* <div className="team-section">
+            <div className="team-section">
               <div className="team-grid">
                 {teamProfiles.slice(0, 4).map((profile) => (
                   <div key={profile.id} className="team-card">
@@ -1298,7 +1309,7 @@ const Centres = () => {
                   {showMoreProfiles ? "Show Less" : "More"}
                 </button>
               </div>
-            </div> */}
+            </div>
 
             {/* Facilities */}
             <div className="breadcrumb-bar" style={{ position: "relative" }}>
@@ -1389,8 +1400,6 @@ const AddProjectDialog = ({ centerId, onClose, onSuccess }) => {
     description: "",
     responsibilities: "",
     skillRequirements: "",
-    projectStatus: "PROJECTS_AVAILABLE",
-    
   });
 
   const [file, setFile] = useState(null);
@@ -1427,7 +1436,7 @@ const AddProjectDialog = ({ centerId, onClose, onSuccess }) => {
             placeholder="Title"
             onChange={(e) => setForm({ ...form, title: e.target.value })}
           />
-       
+
           <textarea
             className="form-input form-textarea"
             placeholder="Description"

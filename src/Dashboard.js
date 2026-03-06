@@ -411,10 +411,7 @@ function CentreForm({
   setCenterId,
   description,
   setDescription,
-  projectStatus,
-  setProjectStatus,
-  professorId,
-  setProfessorId,
+ 
 
   file,
   setFile,
@@ -474,31 +471,9 @@ function CentreForm({
         />
       </Field>
 
-      <Field label="Project Status">
-        <select
-          value={projectStatus}
-          onChange={(e) => setProjectStatus(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "8px",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-          }}
-        >
-          <option value="PROJECTS_AVAILABLE">ACTIVE</option>
-          <option value="PROJECTS_UNAVAILABLE">INACTIVE</option>
-          <option value="COMPLETED">COMPLETED</option>
-        </select>
-      </Field>
+      
 
-      <Field label="Professor Register No" required error={errors.professorId}>
-        <TextBox
-          value={professorId}
-          onChange={(e) => setProfessorId(e.target.value)}
-          placeholder="Enter professor register number"
-          hasError={!!errors.professorId}
-        />
-      </Field>
+   
 
       <Field label="Project Image" required error={errors.file}>
         <input
@@ -735,7 +710,7 @@ export default function Dashboard() {
     if (!name.trim()) e.name = "Center name is required.";
     if (!centerId.trim()) e.centerId = "Center ID is required.";
     if (!description.trim()) e.description = "Description is required.";
-    if (!professorId.trim()) e.professorId = "Professor ID is required.";
+    
     if (!file && !preview) e.file = "Image is required.";
     setCErrors(e);
     return Object.keys(e).length === 0;
@@ -748,8 +723,7 @@ export default function Dashboard() {
       name: name,
       centerId: centerId,
       description: description,
-      projectStatus: projectStatus,
-      professorId: professorId,
+      
     };
 
     try {
@@ -769,8 +743,7 @@ export default function Dashboard() {
       name: name,
       centerId: centerId,
       description: description,
-      projectStatus: projectStatus,
-      professorId: professorId,
+    
     };
 
     try {

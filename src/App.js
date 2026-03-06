@@ -31,6 +31,7 @@ function App() {
               <Route path="/projects" element={<Projects />}></Route>
 
               <Route path="/profile" element={<Profile />}></Route>
+              <Route path="/student/:registerNo" element={<Profile />} />
               {/* <Route path='/dashboard-admin' element={<DashboardA/>}></Route>
               <Route path='/dashboard-super' element={<DashboardS/>}></Route>
               <Route path='/dashboard-management' element={<DashboardM/>}></Route>

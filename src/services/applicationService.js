@@ -13,6 +13,7 @@ const getAuthHeader = () => {
 
 const applicationService = {
   approveApplication: async (applicationId) => {
+    console.log(applicationId)
     return await axios.put(
       `${BASE_URL}/application/${applicationId}/APPROVE`,
       {},

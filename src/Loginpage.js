@@ -59,17 +59,9 @@ function Loginpage() {
                 setTimeout(() => {
                     switch (role) {
                         case "Admin":
-                            navigate("/dashboard-admin");
+                            navigate("/dashboard");
                             break;
-                        case "Super-Admin":
-                            navigate("/dashboard-super");
-                            break;
-                        case "Management":
-                            navigate("/dashboard-management");
-                            break;
-                        case "End-User":
-                            navigate("/enduser");
-                            break;
+                       
                         default:
                             navigate("/dashboard");
                     }
@@ -119,9 +111,9 @@ function Loginpage() {
                             required
                         >
                             <option value="">Select Role</option>
-                            <option value="Super-Admin">Super Admin</option>
+                            
                             <option value="Admin">Admin</option>
-                            <option value="Management">Management</option>
+                            
                             <option value="End-User">Student</option>
                         </select>
                     </div>

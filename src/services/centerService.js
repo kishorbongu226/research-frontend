@@ -36,6 +36,19 @@ const centerService = {
       },
     });
   },
+  updateCenter: async (centerID,centerData, file) => {
+    const formData = new FormData();
+    console.log(centerID)
+    formData.append("center", JSON.stringify(centerData));
+    formData.append("file", file);
+
+    return await axios.put(`${BASE_URL}/centers/edit/${centerID}`, formData, {
+      headers: {
+        ...getAuthHeader(),
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
 
   deleteCenter: async (centerId) => {
     return await axios.delete(`${BASE_URL}/centers/${centerId}`, {

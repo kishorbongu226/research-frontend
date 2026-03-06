@@ -61,6 +61,11 @@ const projectService = {
       headers: getAuthHeader(),
     });
   },
+  markProjectCompleted: async (projectId) => {
+  return await axios.post(`${BASE_URL}/project/completed/${projectId}`, {}, {
+    headers: getAuthHeader(),
+  });
+},
 };
 
 export default projectService;

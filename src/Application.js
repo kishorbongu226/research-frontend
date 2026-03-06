@@ -7,15 +7,15 @@ export default function App() {
   const [applications, setApplications] = useState([]);
 
   const [approvedList, setApprovedList] = useState([]);
-  const professorId = 2; // later replace with Redux
+   // later replace with Redux
 
   const fetchApprovedApplications = async () => {
     try {
       const response =
-        await applicationService.getApprovedApplications(professorId);
+        await applicationService.getApprovedApplications();
 
       const formatted = response.data.map((app) => ({
-        id: app.id,
+        id: app.applicationId,
         studentName: app.name,
         centreName: app.centerName,
         imageUrl: `https://ui-avatars.com/api/?name=${app.name}&background=7d1935&color=fff&size=200`,
@@ -38,13 +38,13 @@ export default function App() {
 
   const fetchPendingApplications = async () => {
     try {
-      const professorId = 2; // 🔥 Replace with logged-in professor id
+      // 🔥 Replace with logged-in professor id
 
       const response =
-        await applicationService.getPendingApplications(professorId);
+        await applicationService.getPendingApplications();
 
       const formattedData = response.data.map((app) => ({
-        id: app.id, // must be DB id
+        id: app.applicationId, // must be DB id
         studentName: app.name,
         registerNumber: app.registerNo,
         email: app.email,
@@ -75,7 +75,7 @@ export default function App() {
     e.stopPropagation();
 
     try {
-      await applicationService.approveApplication(id, professorId);
+      await applicationService.approveApplication(id);
 
       // Refresh from DB
       await fetchPendingApplications();

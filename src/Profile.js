@@ -4,19 +4,27 @@ import system from "./assets/system.jpg";
 import Header from "./Header";
 import React, { useEffect, useState } from "react";
 import studentService from "./services/studentService";
+import { useParams } from "react-router-dom";
 
 const Profile = () => {
-  const registerNo = "43111446"; // later replace with login
+  const { registerNo } = useParams();
 
+  const auth = JSON.parse(sessionStorage.getItem("AUTH"));
+
+  const loggedInRegisterNo = auth?.username;
+
+  const studentRegisterNo = registerNo || loggedInRegisterNo;
   const [student, setStudent] = useState(null);
 
   useEffect(() => {
-    fetchStudent();
-  }, []);
+    if (studentRegisterNo) {
+      fetchStudent();
+    }
+  }, [studentRegisterNo]);
 
   const fetchStudent = async () => {
     try {
-      const response = await studentService.getStudent(registerNo);
+      const response = await studentService.getStudent(studentRegisterNo);
       setStudent(response.data);
     } catch (error) {
       console.error("Error fetching student:", error);

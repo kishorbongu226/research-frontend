@@ -3,7 +3,7 @@ import Header from "./Header";
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import projectService from "./services/projectService";
-
+import { useNavigate } from "react-router-dom";
 const defaultMembers = [
   { name: "Dr. A. Sharma", role: "Head" },
   { name: "Dr. S. Patel", role: "Reaseach Scientist" },
@@ -33,6 +33,7 @@ const defaultSkills = [
 const TOTAL_REPORTS = 4;
 
 const Project = () => {
+  const navigate = useNavigate();
   const { projectId } = useParams();
 
   const [title, setTitle] = useState("");
@@ -101,7 +102,7 @@ const Project = () => {
 
         setTitle(data.title);
         setDescription1(data.description);
-        setMembers([{ name: data.directorName, role: "Director" }]);
+        setMembers([{ name: data.directorName, role: "Head" }]);
         setImageUrl(data.imageUrl);
 
         setResponsibilities(
@@ -121,6 +122,7 @@ const Project = () => {
           await projectService.getStudentsByProject(projectId);
 
         const students = studentsRes.data.map((s) => ({
+          registerNo:s.registerNo,
           name: s.name,
           dept: s.branch,
           year: s.year,
@@ -374,7 +376,11 @@ const Project = () => {
       </div>
       <div className="sidebar-list">
         {involvedStudents.map((s, i) => (
-          <div className="sidebar-student" key={i}>
+          <div
+  className="sidebar-student"
+  key={i}
+  onClick={() => navigate(`/student/${s.registerNo}`)}
+>
             <img className="student-photo" src={s.img} alt={s.name} />
             <div className="student-info">
               <div className="student-name">{s.name}</div>

@@ -1351,15 +1351,72 @@ const Centres = () => {
                             <strong>Skills Required:</strong>{" "}
                             {proj.skillRequirements}
                           </p>
+
+                          <p>
+                            <strong>Status:</strong>{" "}
+                            <span
+                              style={{
+                                padding: "4px 10px",
+                                borderRadius: "12px",
+                                fontSize: "12px",
+                                fontWeight: "600",
+                                background:
+                                  proj.projectStatus === "ONGOING"
+                                    ? "#fffbea"
+                                    : "#edf2f7",
+                                color:
+                                  proj.projectStatus === "ONGOING"
+                                    ? "#b7791f"
+                                    : "#4a5568",
+                              }}
+                            >
+                              {proj.projectStatus}
+                            </span>
+                          </p>
                         </div>
                         <Heart size={20} className="heart-icon" />
                       </div>
-                      <button
-                        className="view-more-link"
-                        onClick={() => navigate(`/project/${proj.projectId}`)}
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "10px",
+                          marginTop: "12px",
+                        }}
                       >
-                        View More →
-                      </button>
+                        <button
+                          className="view-more-link"
+                          style={{ position: "static" }}
+                          onClick={() => navigate(`/project/${proj.projectId}`)}
+                        >
+                          View More →
+                        </button>
+
+                        {proj.projectStatus !== "COMPLETED" && (
+                          <button
+                            style={{
+                              padding: "6px 12px",
+                              borderRadius: "6px",
+                              border: "none",
+                              background: "#2f855a",
+                              color: "white",
+                              fontSize: "12px",
+                              cursor: "pointer",
+                            }}
+                            onClick={async () => {
+                              try {
+                                await projectService.markProjectCompleted(
+                                  proj.projectId,
+                                );
+                                fetchProjects();
+                              } catch (err) {
+                                console.error(err);
+                              }
+                            }}
+                          >
+                            Mark Completed
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))

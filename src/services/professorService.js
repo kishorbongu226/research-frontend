@@ -18,6 +18,11 @@ const professorService = {
       headers: getAuthHeader(),
     });
   },
+  getAdminProfessor: async (registerNo) => {
+    return await axios.get(`${BASE_URL}/admins/${registerNo}`, {
+      headers: getAuthHeader(),
+    });
+  },
 };
 
 export default professorService;

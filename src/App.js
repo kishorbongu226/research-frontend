@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Dashboard from "./Dashboard";
 import News from "./News.js";
 import Profile from "./Profile.js";
+import AdminProfile from "./adminProfile.js";
 import Loginpage from "./Loginpage.js";
 import { Provider } from "react-redux";
 import store, { persistor } from "./Redux/Store.js";
@@ -32,6 +33,7 @@ function App() {
 
               <Route path="/profile" element={<Profile />}></Route>
               <Route path="/student/:registerNo" element={<Profile />} />
+              <Route path="/profile/:registerNo" element={<AdminProfile />} />
               {/* <Route path='/dashboard-admin' element={<DashboardA/>}></Route>
               <Route path='/dashboard-super' element={<DashboardS/>}></Route>
               <Route path='/dashboard-management' element={<DashboardM/>}></Route>

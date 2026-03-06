@@ -411,7 +411,6 @@ function CentreForm({
   setCenterId,
   description,
   setDescription,
- 
 
   file,
   setFile,
@@ -470,10 +469,6 @@ function CentreForm({
           }}
         />
       </Field>
-
-      
-
-   
 
       <Field label="Project Image" required error={errors.file}>
         <input
@@ -618,6 +613,9 @@ function SectionBar({ title, rightSlot }) {
 // ─── DASHBOARD ───────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
+  const auth = JSON.parse(sessionStorage.getItem("auth"));
+  const isAdmin = auth?.role === "Admin";
+  console.log(isAdmin)
   const scrollRef = useRef(null);
   const navigate = useNavigate();
   const handleCentreClick = (centerId) => {
@@ -710,7 +708,7 @@ export default function Dashboard() {
     if (!name.trim()) e.name = "Center name is required.";
     if (!centerId.trim()) e.centerId = "Center ID is required.";
     if (!description.trim()) e.description = "Description is required.";
-    
+
     if (!file && !preview) e.file = "Image is required.";
     setCErrors(e);
     return Object.keys(e).length === 0;
@@ -723,7 +721,6 @@ export default function Dashboard() {
       name: name,
       centerId: centerId,
       description: description,
-      
     };
 
     try {
@@ -743,7 +740,6 @@ export default function Dashboard() {
       name: name,
       centerId: centerId,
       description: description,
-    
     };
 
     try {
@@ -1207,7 +1203,9 @@ export default function Dashboard() {
             {centres.slice(0, 5).map((c) => (
               <div
                 key={c.id}
+                onClick={() => handleCentreClick(c.centerId)}
                 className="carousel-item"
+                // onClick={}
                 style={{
                   minWidth: 300,
                   height: 180,
@@ -1253,11 +1251,13 @@ export default function Dashboard() {
         <SectionBar
           title="CENTRES OVERVIEW"
           rightSlot={
-            <PencilMenu
-              onAdd={openCentreAdd}
-              onEdit={openCentreEditPick}
-              onRemove={openCentreRemovePick}
-            />
+            isAdmin && (
+              <PencilMenu
+                onAdd={openCentreAdd}
+                onEdit={openCentreEditPick}
+                onRemove={openCentreRemovePick}
+              />
+            )
           }
         />
 
@@ -1368,11 +1368,13 @@ export default function Dashboard() {
               </h2>
 
               {/* ← pencil button for events */}
-              <PencilMenu
-                onAdd={openEventAdd}
-                onEdit={openEventEditPick}
-                onRemove={openEventRemovePick}
-              />
+              {isAdmin && (
+                <PencilMenu
+                  onAdd={openEventAdd}
+                  onEdit={openEventEditPick}
+                  onRemove={openEventRemovePick}
+                />
+              )}
             </div>
 
             {events.length === 0 && (

@@ -33,6 +33,10 @@ const defaultSkills = [
 const TOTAL_REPORTS = 4;
 
 const Project = () => {
+   const auth = JSON.parse(sessionStorage.getItem("auth"));
+    
+    const isUser = auth?.role ==="User"
+    const { centerId } = useParams();
   const navigate = useNavigate();
   const { projectId } = useParams();
 
@@ -1302,7 +1306,7 @@ const Project = () => {
             <StudentsPanel />
           </div>
 
-          <button
+          {isUser &&  (<button
             className={"apply-btn" + (isProjectCompleted ? " completed" : "")}
             onClick={!isProjectCompleted ? handleApplyClick : undefined}
           >
@@ -1314,6 +1318,7 @@ const Project = () => {
               "Apply now"
             )}
           </button>
+          )}
         </div>
 
         {/* Desktop Sidebar */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-
+import { useNavigate } from "react-router-dom";
 import {
   Menu,
   Bell,
@@ -22,7 +22,6 @@ import solar from "./assets/solar.jpg";
 import { useParams } from "react-router-dom";
 import centerService from "./services/centerService";
 import projectService from "./services/projectService";
-import { useNavigate } from "react-router-dom";
 import professorService from "./services/professorService";
 
 // Comprehensive mock data
@@ -669,6 +668,9 @@ const SidebarFacilities = ({ facilityList }) => {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const Centres = () => {
+  const auth = JSON.parse(sessionStorage.getItem("auth"));
+  const isAdmin = auth?.role === "Admin";
+  const isUser = auth?.role ==="User"
   const { centerId } = useParams();
 
   const [centerData, setCenterData] = useState(null);
@@ -706,10 +708,10 @@ const Centres = () => {
         setCenterData(centerRes.data);
         setProjects(projectRes.data);
         const professors = professorRes.data.map((prof) => ({
-          id: prof.id,
+          id: prof.registerNo,
           name: prof.name,
-          designation: prof.occupation,
-          image: prof.imageUrl,
+          designation: prof.Occupation,
+          image: prof.imageURL,
         }));
 
         setTeamProfiles(professors);
@@ -1249,7 +1251,7 @@ const Centres = () => {
             <div className="faculty-card">
               <div className="profile-side">
                 <img
-                  src={centerData.imageUrl}
+                  src={centerData.imgUrl}
                   alt={centerData.centerName}
                   className="profile-img"
                 />
@@ -1273,7 +1275,12 @@ const Centres = () => {
             <div className="team-section">
               <div className="team-grid">
                 {teamProfiles.slice(0, 4).map((profile) => (
-                  <div key={profile.id} className="team-card">
+                  <div
+                    key={profile.id}
+                    className="team-card"
+                    onClick={() => navigate(`/profile/${profile.id}`)}
+                    style={{ cursor: "pointer" }}
+                  >
                     <img
                       src={profile.image}
                       alt={profile.name}
@@ -1289,7 +1296,12 @@ const Centres = () => {
               >
                 <div className="team-grid">
                   {teamProfiles.slice(4).map((profile) => (
-                    <div key={profile.id} className="team-card">
+                    <div
+                      key={profile.id}
+                      className="team-card"
+                      onClick={() => navigate(`/profile/${profile.id}`)}
+                      style={{ cursor: "pointer" }}
+                    >
                       <img
                         src={profile.image}
                         alt={profile.name}
@@ -1391,7 +1403,7 @@ const Centres = () => {
                           View More →
                         </button>
 
-                        {proj.projectStatus !== "COMPLETED" && (
+                        {isAdmin && proj.projectStatus !== "COMPLETED" && (
                           <button
                             style={{
                               padding: "6px 12px",
@@ -1434,12 +1446,14 @@ const Centres = () => {
 
       <div className="demo-controls"></div>
 
-      <button
-        className="floating-project-btn"
-        onClick={() => setShowAddProject(true)}
-      >
-        + Add Project
-      </button>
+      {isAdmin && (
+        <button
+          className="floating-project-btn"
+          onClick={() => setShowAddProject(true)}
+        >
+          + Add Project
+        </button>
+      )}
       {showAddProject && (
         <AddProjectDialog
           centerId={centerId}

@@ -2,33 +2,13 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "./Header";
 import centerService from "./services/centerService";
+import eventService from "./services/eventService";
 
 const MAROON = "#800020";
 const DANGER = "#c53030";
 let autoId = 300;
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
-
-const INIT_EVENTS = [
-  {
-    id: 1,
-    title: "Annual Science Fest 2025",
-    date: "2025-03-15",
-    desc: "Biggest science festival with exhibitions, talks and competitions.",
-  },
-  {
-    id: 2,
-    title: "International Research Summit",
-    date: "2025-04-10",
-    desc: "Two-day summit bringing researchers from around the globe.",
-  },
-  {
-    id: 3,
-    title: "Innovation & Technology Expo",
-    date: "2025-05-20",
-    desc: "Showcasing latest innovations from student projects.",
-  },
-];
 
 // ─── PENCIL SVG ──────────────────────────────────────────────────────────────
 
@@ -513,6 +493,10 @@ function EventForm({
   setDate,
   desc,
   setDesc,
+  file,
+  setFile,
+  preview,
+  setPreview,
   errors,
   onSave,
   onClose,
@@ -571,6 +555,39 @@ function EventForm({
           }}
         />
       </Field>
+      <Field label="Event Image">
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            const selectedFile = e.target.files[0];
+            if (!selectedFile) return;
+
+            setFile(selectedFile);
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              setPreview(reader.result);
+            };
+
+            reader.readAsDataURL(selectedFile);
+          }}
+        />
+
+        {preview && (
+          <img
+            src={preview}
+            alt="preview"
+            style={{
+              width: "100%",
+              height: "140px",
+              objectFit: "cover",
+              borderRadius: "8px",
+              marginTop: "10px",
+            }}
+          />
+        )}
+      </Field>
 
       <ModalBtns>
         <Btn onClick={onClose}>Cancel</Btn>
@@ -615,7 +632,7 @@ function SectionBar({ title, rightSlot }) {
 export default function Dashboard() {
   const auth = JSON.parse(sessionStorage.getItem("auth"));
   const isAdmin = auth?.role === "Admin";
-  console.log(isAdmin)
+  console.log(isAdmin);
   const scrollRef = useRef(null);
   const navigate = useNavigate();
   const handleCentreClick = (centerId) => {
@@ -625,6 +642,7 @@ export default function Dashboard() {
   const [centres, setCentres] = useState([]);
   useEffect(() => {
     fetchCenters();
+    fetchEvents();
   }, []);
 
   const fetchCenters = async () => {
@@ -635,7 +653,15 @@ export default function Dashboard() {
       console.error("Error fetching centers", error);
     }
   };
-  const [events, setEvents] = useState(INIT_EVENTS);
+  const fetchEvents = async () => {
+    try {
+      const response = await eventService.getEvents();
+      setEvents(response.data);
+    } catch (error) {
+      console.error("Error fetching events", error);
+    }
+  };
+  const [events, setEvents] = useState([]);
 
   const [modal, setModal] = useState(null);
   const [picked, setPicked] = useState(null);
@@ -654,6 +680,8 @@ export default function Dashboard() {
   const [eTitle, setETitle] = useState("");
   const [eDate, setEDate] = useState("");
   const [eDesc, setEDesc] = useState("");
+  const [eFile, setEFile] = useState(null);
+  const [ePreview, setEPreview] = useState("");
   const [eErrors, setEErrors] = useState({});
 
   // ── Centre operations ──────────────────────────────────────────────────────
@@ -768,6 +796,8 @@ export default function Dashboard() {
     setETitle("");
     setEDate("");
     setEDesc("");
+    setEFile(null);
+    setEPreview("");
     setEErrors({});
   };
 
@@ -791,8 +821,8 @@ export default function Dashboard() {
   const pickEventForEdit = (ev) => {
     setPicked(ev);
     setETitle(ev.title);
-    setEDate(ev.date);
-    setEDesc(ev.desc);
+    setEDate(ev.eventDate);
+    setEDesc(ev.description);
     setEErrors({});
     setModal("e-edit-form");
   };
@@ -805,30 +835,50 @@ export default function Dashboard() {
     return Object.keys(e).length === 0;
   };
 
-  const saveEventAdd = () => {
+  const saveEventAdd = async () => {
     if (!validateEvent()) return;
-    setEvents((prev) => [
-      ...prev,
-      { id: ++autoId, title: eTitle.trim(), date: eDate, desc: eDesc.trim() },
-    ]);
-    closeE();
+
+    const eventData = {
+      title: eTitle,
+      description: eDesc,
+      eventDate: eDate,
+    };
+
+    try {
+      await eventService.createEvent(eventData, eFile);
+      fetchEvents();
+      closeE();
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const saveEventEdit = () => {
+  const saveEventEdit = async () => {
     if (!validateEvent()) return;
-    setEvents((prev) =>
-      prev.map((ev) =>
-        ev.id === picked.id
-          ? { ...ev, title: eTitle.trim(), date: eDate, desc: eDesc.trim() }
-          : ev,
-      ),
-    );
-    closeE();
+
+    const eventData = {
+      title: eTitle,
+      description: eDesc,
+      eventDate: eDate,
+    };
+
+    try {
+      await eventService.updateEvent(picked.eventId, eventData, eFile);
+      fetchEvents();
+      closeE();
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const doRemoveEvent = () => {
-    setEvents((prev) => prev.filter((ev) => ev.id !== picked.id));
-    closeE();
+  const doRemoveEvent = async () => {
+    try {
+      await eventService.deleteEvent(picked.eventId);
+      fetchEvents();
+      closeE();
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const scroll = (dir) =>
@@ -878,6 +928,18 @@ export default function Dashboard() {
             font-size: 20px !important;
             left: -12px !important;
           }
+          .events-sidebar div::-webkit-scrollbar {
+  width: 6px;
+}
+
+.events-sidebar div::-webkit-scrollbar-thumb {
+  background: #800020;
+  border-radius: 6px;
+}
+
+.events-sidebar div::-webkit-scrollbar-track {
+  background: #f0f0f0;
+}
           
           .scroll-button-right {
             right: -12px !important;
@@ -1076,6 +1138,10 @@ export default function Dashboard() {
           setDate={setEDate}
           desc={eDesc}
           setDesc={setEDesc}
+          file={eFile}
+          setFile={setEFile}
+          preview={ePreview}
+          setPreview={setEPreview}
           errors={eErrors}
           onSave={saveEventAdd}
           onClose={closeE}
@@ -1113,6 +1179,10 @@ export default function Dashboard() {
           setDate={setEDate}
           desc={eDesc}
           setDesc={setEDesc}
+          file={eFile}
+          setFile={setEFile}
+          preview={ePreview}
+          setPreview={setEPreview}
           errors={eErrors}
           onSave={saveEventEdit}
           onClose={closeE}
@@ -1391,49 +1461,74 @@ export default function Dashboard() {
                 Click the pencil icon to add one.
               </p>
             )}
+            <div
+              style={{
+                maxHeight: "420px",
+                overflowY: "auto",
+                paddingRight: "6px",
+              }}
+            >
+              {events.map((ev) => (
+                <div
+                  key={ev.eventId}
+                  className="event-card"
+                  style={{
+                    backgroundColor: "#fff",
+                    border: "1px solid #eee",
+                    borderRadius: 8,
+                    padding: 14,
+                    marginBottom: 14,
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+                  }}
+                >
+                  {/* Event Image */}
+                  {ev.imageUrl && (
+                    <img
+                      src={ev.imageUrl}
+                      alt={ev.title}
+                      style={{
+                        width: "100%",
+                        height: 120,
+                        objectFit: "cover",
+                        borderRadius: 6,
+                        marginBottom: 10,
+                      }}
+                    />
+                  )}
 
-            {events.map((ev) => (
-              <div
-                key={ev.id}
-                className="event-card"
-                style={{
-                  backgroundColor: "#fff",
-                  border: "1px solid #eee",
-                  borderRadius: 8,
-                  padding: 14,
-                  marginBottom: 14,
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-                }}
-              >
-                <div
-                  className="event-card-title"
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 800,
-                    color: MAROON,
-                    marginBottom: 6,
-                    lineHeight: 1.4,
-                  }}
-                >
-                  {ev.title}
-                </div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: "#555",
-                    fontWeight: 600,
-                    marginBottom: 6,
-                  }}
-                >
-                  📅 {ev.date}
-                </div>
-                {ev.desc && (
-                  <div style={{ fontSize: 11, color: "#666", lineHeight: 1.6 }}>
-                    {ev.desc}
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 800,
+                      color: MAROON,
+                      marginBottom: 6,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {ev.title}
                   </div>
-                )}
-              </div>
-            ))}
+
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "#555",
+                      fontWeight: 600,
+                      marginBottom: 6,
+                    }}
+                  >
+                    📅 {ev.eventDate}
+                  </div>
+
+                  {ev.description && (
+                    <div
+                      style={{ fontSize: 11, color: "#666", lineHeight: 1.6 }}
+                    >
+                      {ev.description}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </aside>
         </div>
       </main>

@@ -19,10 +19,12 @@ import nano_p from "./assets/nano-project.jpg";
 import frozen from "./assets/frozen.jpg";
 import sensor from "./assets/sensor.jpg";
 import solar from "./assets/solar.jpg";
+import { Check } from "lucide-react";
 import { useParams } from "react-router-dom";
 import centerService from "./services/centerService";
 import projectService from "./services/projectService";
 import professorService from "./services/professorService";
+import facilityService from "./services/facilityService";
 
 // Comprehensive mock data
 
@@ -292,219 +294,6 @@ import professorService from "./services/professorService";
 // };
 
 // ─── Facilities Edit Dialog ───────────────────────────────────────────────────
-const INITIAL_FACILITIES = [
-  "Thin Films & Coatings Deposition Techniques",
-  "RF/DC Magnetron Co-Sputtering",
-  "Electron Beam Evaporation (EBPVD)",
-  "DC Magnetron Sputtering",
-  "Thermal Evaporation",
-  "Pulsed Laser Deposition (PLD)",
-  "Electrospinning Setup",
-];
-
-const INITIAL_FACILITY_CARDS = [
-  {
-    id: 1,
-    icon: "🔬",
-    title: "Synthesis Facilities",
-    description: "State-of-the-art equipment for research and analysis",
-  },
-  {
-    id: 2,
-    icon: "💻",
-    title: "Characterization Facilities",
-    description: "High-performance computing for data processing",
-  },
-];
-
-const FacilitiesEditDialog = ({
-  facilityCards,
-  facilityList,
-  onSave,
-  onClose,
-}) => {
-  const [cards, setCards] = useState(facilityCards.map((c) => ({ ...c })));
-  const [listItems, setListItems] = useState([...facilityList]);
-  const [activeTab, setActiveTab] = useState("cards");
-
-  const handleCardChange = (id, field, value) =>
-    setCards(cards.map((c) => (c.id === id ? { ...c, [field]: value } : c)));
-  const addCard = () =>
-    setCards([
-      ...cards,
-      { id: Date.now(), icon: "🔧", title: "", description: "" },
-    ]);
-  const removeCard = (id) => setCards(cards.filter((c) => c.id !== id));
-
-  const handleListChange = (idx, value) => {
-    const updated = [...listItems];
-    updated[idx] = value;
-    setListItems(updated);
-  };
-  const addListItem = () => setListItems([...listItems, ""]);
-  const removeListItem = (idx) =>
-    setListItems(listItems.filter((_, i) => i !== idx));
-
-  const handleSave = () => {
-    onSave({ cards, listItems });
-    onClose();
-  };
-
-  const tabs = [
-    { id: "cards", label: "🃏 Facility Cards" },
-    { id: "list", label: "📋 Sidebar List" },
-  ];
-
-  return (
-    <>
-      <div
-        className="dialog-overlay"
-        onClick={(e) => e.target === e.currentTarget && onClose()}
-      >
-        <div className="dialog-box">
-          <div className="dialog-header">
-            <div className="dialog-header-text">
-              <h2>Edit Facilities</h2>
-              <p>Manage facility cards and sidebar list items</p>
-            </div>
-            <button className="dialog-close-btn" onClick={onClose}>
-              <X size={16} />
-            </button>
-          </div>
-
-          <div className="dialog-tabs">
-            {tabs.map((t) => (
-              <button
-                key={t.id}
-                className={`dialog-tab${activeTab === t.id ? " active" : ""}`}
-                onClick={() => setActiveTab(t.id)}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="dialog-body">
-            {/* ── Facility Cards Tab ── */}
-            {activeTab === "cards" && (
-              <>
-                {cards.map((card) => (
-                  <div
-                    key={card.id}
-                    style={{
-                      background: "#f8f9fa",
-                      borderRadius: 14,
-                      padding: 16,
-                      marginBottom: 14,
-                      border: "1px solid #e2e8f0",
-                      display: "flex",
-                      gap: 12,
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 8,
-                        flex: 1,
-                      }}
-                    >
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <input
-                          className="form-input"
-                          value={card.icon}
-                          onChange={(e) =>
-                            handleCardChange(card.id, "icon", e.target.value)
-                          }
-                          placeholder="Icon (emoji)"
-                          style={{
-                            width: 72,
-                            textAlign: "center",
-                            fontSize: 22,
-                            padding: "8px",
-                          }}
-                        />
-                        <input
-                          className="form-input"
-                          value={card.title}
-                          onChange={(e) =>
-                            handleCardChange(card.id, "title", e.target.value)
-                          }
-                          placeholder="Card title"
-                          style={{ flex: 1 }}
-                        />
-                      </div>
-                      <textarea
-                        className="form-input form-textarea"
-                        value={card.description}
-                        onChange={(e) =>
-                          handleCardChange(
-                            card.id,
-                            "description",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="Card description"
-                        style={{ minHeight: 64 }}
-                      />
-                    </div>
-                    <button
-                      className="team-remove-btn"
-                      onClick={() => removeCard(card.id)}
-                      title="Remove"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
-                <button className="add-btn" onClick={addCard}>
-                  <Plus size={14} /> Add Facility Card
-                </button>
-              </>
-            )}
-
-            {/* ── Sidebar List Tab ── */}
-            {activeTab === "list" && (
-              <>
-                {listItems.map((item, idx) => (
-                  <div className="desc-block" key={idx}>
-                    <input
-                      className="form-input"
-                      value={item}
-                      onChange={(e) => handleListChange(idx, e.target.value)}
-                      placeholder={`Facility item ${idx + 1}`}
-                    />
-                    {listItems.length > 1 && (
-                      <button
-                        className="icon-btn danger"
-                        onClick={() => removeListItem(idx)}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <button className="add-btn" onClick={addListItem}>
-                  <Plus size={14} /> Add List Item
-                </button>
-              </>
-            )}
-          </div>
-
-          <div className="dialog-footer">
-            <button className="btn-cancel" onClick={onClose}>
-              Cancel
-            </button>
-            <button className="btn-save" onClick={handleSave}>
-              Save Changes
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-};
 
 // ─── Sidebar Facilities Search Component ─────────────────────────────────────
 const SidebarFacilities = ({ facilityList }) => {
@@ -670,7 +459,7 @@ const SidebarFacilities = ({ facilityList }) => {
 const Centres = () => {
   const auth = JSON.parse(sessionStorage.getItem("auth"));
   const isAdmin = auth?.role === "Admin";
-  const isUser = auth?.role ==="User"
+  const isUser = auth?.role === "User";
   const { centerId } = useParams();
 
   const [centerData, setCenterData] = useState(null);
@@ -680,6 +469,7 @@ const Centres = () => {
 
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [showAddProject, setShowAddProject] = useState(false);
+  const [showAddFacility, setShowAddFacility] = useState(false);
 
   const [showMoreProfiles, setShowMoreProfiles] = useState(false);
   const [showEditDropdown, setShowEditDropdown] = useState(false);
@@ -691,10 +481,42 @@ const Centres = () => {
   const [showFacilitiesDropdown, setShowFacilitiesDropdown] = useState(false);
   const [showFacilitiesDialog, setShowFacilitiesDialog] = useState(false);
   const facilitiesDropdownRef = useRef(null);
-  const [facilityCards, setFacilityCards] = useState(INITIAL_FACILITY_CARDS);
-  const [facilityList, setFacilityList] = useState(INITIAL_FACILITIES);
+  const [facilityList, setFacilityList] = useState([]);
+  const [synthesisFacilities, setSynthesisFacilities] = useState([]);
+  const [characterizationFacilities, setCharacterizationFacilities] = useState(
+    [],
+  );
 
   // Editable state (nanotechnology only)
+  const fetchFacilities = async () => {
+    try {
+      const res = await facilityService.getFacilitiesByCenter(centerId);
+
+      const normal = [];
+      const synthesis = [];
+      const characterization = [];
+
+      res.data.forEach((f) => {
+        switch (f.facilityType) {
+          case "NORMAL":
+            normal.push(f);
+            break;
+          case "SYNTHESIS":
+            synthesis.push(f);
+            break;
+          case "CHARACTERIZATION":
+            characterization.push(f);
+            break;
+        }
+      });
+
+      setFacilityList(normal);
+      setSynthesisFacilities(synthesis);
+      setCharacterizationFacilities(characterization);
+    } catch (err) {
+      console.error("Error fetching facilities", err);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -715,6 +537,7 @@ const Centres = () => {
         }));
 
         setTeamProfiles(professors);
+        await fetchFacilities();
       } catch (err) {
         console.error("Error loading center:", err);
       } finally {
@@ -764,11 +587,6 @@ const Centres = () => {
   const handleFacilitiesAction = (action) => {
     setShowFacilitiesDropdown(false);
     if (action === "edit") setShowFacilitiesDialog(true);
-  };
-
-  const handleSaveFacilities = ({ cards, listItems }) => {
-    setFacilityCards(cards);
-    setFacilityList(listItems);
   };
 
   if (loading) return <div style={{ padding: 20 }}>Loading...</div>;
@@ -1116,9 +934,21 @@ const Centres = () => {
           gap: 24px; margin-bottom: 40px;
         }
         .facility-card-main {
-          background: #fff; border-radius: 12px; padding: 24px; text-align: center;
-          transition: all 0.3s ease; border: 1px solid #e2e8f0;
-        }
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  max-height: 260px;
+  overflow-y: auto;
+}
+  .facility-card-main::-webkit-scrollbar {
+  width: 5px;
+}
+
+.facility-card-main::-webkit-scrollbar-thumb {
+  background: #800020;
+  border-radius: 4px;
+}
         .facility-card-main:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); border-color: #8b1e3f; }
         .facility-card-main .facility-icon { font-size: 48px; margin-bottom: 16px; display: block; }
         .facility-card-main h4 { font-size: 18px; font-weight: 600; color: #2c3e50; margin: 0 0 12px 0; }
@@ -1324,20 +1154,110 @@ const Centres = () => {
             </div>
 
             {/* Facilities */}
-            <div className="breadcrumb-bar" style={{ position: "relative" }}>
+            <div
+              className="breadcrumb-bar"
+              style={{ display: "flex", justifyContent: "space-between" }}
+            >
               <h2>FACILITIES</h2>
-              <div
-                style={{ display: "flex", alignItems: "center", gap: 12 }}
-              ></div>
+
+              {isAdmin && (
+                <button
+                  className="more-btn"
+                  style={{ padding: "6px 16px" }}
+                  onClick={() => setShowAddFacility(true)}
+                >
+                  + Add Facility
+                </button>
+              )}
             </div>
             <div className="facilities-cards">
-              {facilityCards.map((card) => (
-                <div key={card.id} className="facility-card-main">
-                  <div className="facility-icon">{card.icon}</div>
-                  <h4>{card.title}</h4>
-                  <p>{card.description}</p>
-                </div>
-              ))}
+              {/* Synthesis Facilities */}
+              <div className="facility-card-main">
+                <h4>Synthesis Facilities</h4>
+
+                {synthesisFacilities.map((f) => (
+                  <div
+                    key={f.id}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginBottom: 6,
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <Check size={16} color="#2f855a" />
+                      {f.facilityName}
+                    </span>
+
+                    {/* {isAdmin && (
+                      <button
+                        style={{
+                          color: "red",
+                          border: "none",
+                          background: "none",
+                          cursor: "pointer",
+                        }}
+                        onClick={async () => {
+                          await facilityService.deleteFacility(f.id);
+                          fetchFacilities();
+                        }}
+                      >
+                        ✕
+                      </button>
+                    )} */}
+                  </div>
+                ))}
+              </div>
+
+              {/* Characterization Facilities */}
+              <div className="facility-card-main">
+                <h4>Characterization Facilities</h4>
+
+                {characterizationFacilities.map((f) => (
+                  <div
+                    key={f.id}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginBottom: 6,
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <Check size={16} color="#2f855a" />
+                      {f.facilityName}
+                    </span>
+
+                    {/* {isAdmin && (
+                      <button
+                        style={{
+                          color: "red",
+                          border: "none",
+                          background: "none",
+                          cursor: "pointer",
+                        }}
+                        onClick={async () => {
+                          await facilityService.deleteFacility(f.id);
+                          fetchFacilities();
+                        }}
+                      >
+                        ✕
+                      </button>
+                    )} */}
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Projects */}
@@ -1438,8 +1358,13 @@ const Centres = () => {
 
           {/* Sidebar — uses the new SidebarFacilities component */}
           <aside className="sidebar">
-            <SidebarFacilities facilityList={facilityList} />
-            <h3 className="sidebar-title">Recent Successful Projects</h3>
+            <SidebarFacilities
+              facilityList={facilityList.map((f) => f.facilityName)}
+            />
+
+            <h3 className="sidebar-title" style={{ marginTop: "40px" }}>
+              Recent Successful Projects
+            </h3>
           </aside>
         </div>
       </div>
@@ -1459,6 +1384,27 @@ const Centres = () => {
           centerId={centerId}
           onClose={() => setShowAddProject(false)}
           onSuccess={fetchProjects}
+        />
+      )}
+
+      {showAddFacility && (
+        <AddFacilityDialog
+          onClose={() => setShowAddFacility(false)}
+          onSave={async (name, type) => {
+            try {
+              await facilityService.addFacility({
+                centerId,
+                facilityName: name,
+                facilityType: type,
+              });
+
+              fetchFacilities();
+              setShowAddFacility(false);
+            } catch (err) {
+              console.error(err);
+              alert("Error adding facility");
+            }
+          }}
         />
       )}
     </div>
@@ -1536,6 +1482,61 @@ const AddProjectDialog = ({ centerId, onClose, onSuccess }) => {
           </button>
           <button className="btn-save" onClick={handleSubmit}>
             Save
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+const AddFacilityDialog = ({ onClose, onSave }) => {
+  const [name, setName] = useState("");
+  const [type, setType] = useState("NORMAL");
+
+  const handleSave = () => {
+    if (!name.trim()) {
+      alert("Facility name required");
+      return;
+    }
+
+    onSave(name, type);
+  };
+
+  return (
+    <div className="dialog-overlay">
+      <div className="dialog-box">
+        <div className="dialog-header">
+          <h2>Add Facility</h2>
+          <button className="dialog-close-btn" onClick={onClose}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="dialog-body">
+          <input
+            className="form-input"
+            placeholder="Facility Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+
+          <select
+            className="form-input"
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+          >
+            <option value="NORMAL">Normal</option>
+            <option value="SYNTHESIS">Synthesis</option>
+            <option value="CHARACTERIZATION">Characterization</option>
+          </select>
+        </div>
+
+        <div className="dialog-footer">
+          <button className="btn-cancel" onClick={onClose}>
+            Cancel
+          </button>
+
+          <button className="btn-save" onClick={handleSave}>
+            Add
           </button>
         </div>
       </div>

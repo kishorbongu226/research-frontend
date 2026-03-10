@@ -33,10 +33,10 @@ const defaultSkills = [
 const TOTAL_REPORTS = 4;
 
 const Project = () => {
-   const auth = JSON.parse(sessionStorage.getItem("auth"));
-    
-    const isUser = auth?.role ==="User"
-    const { centerId } = useParams();
+  const auth = JSON.parse(sessionStorage.getItem("auth"));
+
+  const isUser = auth?.role === "End-User";
+  const { centerId } = useParams();
   const navigate = useNavigate();
   const { projectId } = useParams();
 
@@ -126,7 +126,7 @@ const Project = () => {
           await projectService.getStudentsByProject(projectId);
 
         const students = studentsRes.data.map((s) => ({
-          registerNo:s.registerNo,
+          registerNo: s.registerNo,
           name: s.name,
           dept: s.branch,
           year: s.year,
@@ -381,15 +381,15 @@ const Project = () => {
       <div className="sidebar-list">
         {involvedStudents.map((s, i) => (
           <div
-  className="sidebar-student"
-  key={i}
-  onClick={() => navigate(`/student/${s.registerNo}`)}
->
+            className="sidebar-student"
+            key={i}
+            onClick={() => navigate(`/student/${s.registerNo}`)}
+          >
             <img className="student-photo" src={s.img} alt={s.name} />
             <div className="student-info">
               <div className="student-name">{s.name}</div>
-              <div className="student-dept">{s.dept}</div>
-              <div className="student-year">{s.year}</div>
+              <div className="student-dept">Branch : {s.dept}</div>
+              <div className="student-year">Year : {s.year}</div>
             </div>
           </div>
         ))}
@@ -1306,18 +1306,19 @@ const Project = () => {
             <StudentsPanel />
           </div>
 
-          {isUser &&  (<button
-            className={"apply-btn" + (isProjectCompleted ? " completed" : "")}
-            onClick={!isProjectCompleted ? handleApplyClick : undefined}
-          >
-            {isProjectCompleted ? (
-              <>
-                <span>✓</span> Project Completed
-              </>
-            ) : (
-              "Apply now"
-            )}
-          </button>
+          {isUser && (
+            <button
+              className={"apply-btn" + (isProjectCompleted ? " completed" : "")}
+              onClick={!isProjectCompleted ? handleApplyClick : undefined}
+            >
+              {isProjectCompleted ? (
+                <>
+                  <span>✓</span> Project Completed
+                </>
+              ) : (
+                "Apply now"
+              )}
+            </button>
           )}
         </div>
 

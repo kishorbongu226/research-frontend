@@ -632,7 +632,7 @@ function SectionBar({ title, rightSlot }) {
 export default function Dashboard() {
   const auth = JSON.parse(sessionStorage.getItem("auth"));
   const isAdmin = auth?.role === "Admin";
-  console.log(isAdmin);
+
   const scrollRef = useRef(null);
   const navigate = useNavigate();
   const handleCentreClick = (centerId) => {

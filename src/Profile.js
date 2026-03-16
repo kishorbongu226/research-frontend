@@ -4,21 +4,25 @@ import system from "./assets/system.jpg";
 import Header from "./Header";
 import React, { useEffect, useState } from "react";
 import studentService from "./services/studentService";
+import projectService from "./services/projectService";
 import { useParams } from "react-router-dom";
 
 const Profile = () => {
   const { registerNo } = useParams();
 
-  const auth = JSON.parse(sessionStorage.getItem("AUTH"));
+  const auth = JSON.parse(sessionStorage.getItem("auth"));
 
   const loggedInRegisterNo = auth?.username;
 
   const studentRegisterNo = registerNo || loggedInRegisterNo;
   const [student, setStudent] = useState(null);
+  const [ongoingProjects, setOngoingProjects] = useState([]);
+  const [completedProjects, setCompletedProjects] = useState([]);
 
   useEffect(() => {
     if (studentRegisterNo) {
       fetchStudent();
+      fetchProjects();
     }
   }, [studentRegisterNo]);
 
@@ -30,6 +34,26 @@ const Profile = () => {
       console.error("Error fetching student:", error);
     }
   };
+  const fetchProjects = async () => {
+    try {
+      const response =
+        await projectService.getProjectsByStudent(studentRegisterNo);
+      console.log("Projects API:", response.data);
+      const ongoing = response.data.filter(
+        (p) => p.projectStatus === "ONGOING",
+      );
+
+      const completed = response.data.filter(
+        (p) => p.projectStatus === "COMPLETED",
+      );
+
+      setOngoingProjects(ongoing);
+      setCompletedProjects(completed);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+    }
+  };
+
   const css = `
     :root {
       --maroon: #801033;
@@ -206,8 +230,8 @@ const Profile = () => {
     }
 
     .rd-photo {
-      width: 160px;
-      height: 160px;
+      width: 100px;
+      height: 100px;
       background-color: #eee;
       border-radius: 8px;
       display: flex;
@@ -256,6 +280,7 @@ const Profile = () => {
       color: white;
       padding: 6px 14px;
       border-radius: 4px;
+      text-align:right;
       font-size: 14px;
       font-weight: bold;
       text-transform: uppercase;
@@ -380,6 +405,7 @@ const Profile = () => {
       }
       .rd-role-info {
         margin-top: 10px;
+        margin-left:auto;
       }
       .completed-project-card {
         flex-direction: column;
@@ -466,137 +492,96 @@ const Profile = () => {
           {/* Projects Section */}
           <h2 className="section-title">Current Project</h2>
 
-          {/* Current R&D Box Updated Layout */}
-          <div className="project-body">
-            <div className="rd-content-wrapper">
-              <div className="rd-photo">
-                <img
-                  src={person}
-                  alt="Smart Traffic Management System"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    borderRadius: "8px",
-                  }}
-                />
-              </div>
-              <div className="rd-detail-container">
-                <div className="rd-details-wrapper">
-                  <div className="rd-main-info">
-                    <h3
+          {ongoingProjects.length === 0 ? (
+            <p>No ongoing projects</p>
+          ) : (
+            ongoingProjects.map((project, index) => (
+              <div key={index} className="completed-project-card">
+                <div className="rd-content-wrapper">
+                  <div className="rd-photo">
+                    <img
+                      src={project.projectImageUrl}
+                      alt={project.projectName}
                       style={{
-                        fontSize: "18px",
-                        textTransform: "uppercase",
-                        fontWeight: "bold",
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        borderRadius: "8px",
                       }}
-                    >
-                      Smart Traffic Management System
-                    </h3>
-                    <p
-                      style={{
-                        color: "var(--maroon)",
-                        fontWeight: "600",
-                        fontSize: "17px",
-                      }}
-                    >
-                      Advanced AI Research Center
-                    </p>
+                    />
                   </div>
-                  <div className="rd-role-info">
-                    <div className="role-badge">Lead Developer</div>
-                    <br />
-                    <div className="team-badge">👥 Team Size: 05</div>
+
+                  <div className="rd-details-container">
+                    <div className="rd-main-info">
+                      <h3
+                        style={{
+                          fontSize: "18px",
+                          fontWeight: "bold",
+                          padding: 10,
+                        }}
+                      >
+                        {project.projectName}
+                      </h3>
+
+                      <p
+                        style={{
+                          color: "var(--maroon)",
+                          fontWeight: "600",
+                          fontSize: "16px",
+                        }}
+                      >
+                        {project.centerName}
+                      </p>
+                    </div>
+
+                    <div className="rd-role-info" style={{ padding: 30 }}>
+                      <div className="role-badge">Developer</div>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <p className="bio-text">
-                    I am a Computer Science Engineering student with a strong
-                    interest in technology, web development, and
-                    problem-solving. I enjoy learning new tools and technologies
-                    and applying them to real-world projects. I am motivated,
-                    curious, and always eager to improve my skills through
-                    hands-on experience.
-                  </p>
-                </div>
               </div>
-            </div>
-            <div className="progress-container" style={{ margin: "20px 0 0" }}>
-              <span className="progress-text">Progress: 45%</span>
-              <div className="progress-bar-bg">
-                <div
-                  className="progress-bar-fill"
-                  style={{ width: "45%", backgroundColor: "#3498db" }}
-                ></div>
-              </div>
-            </div>
-          </div>
+            ))
+          )}
 
           {/* Completed Projects Section */}
           <h2 className="section-title" style={{ marginTop: "40px" }}>
             Completed Projects
           </h2>
 
-          {[
-            /* eslint-disable */
-            {
-              center: "NextGen Innovation Hub",
-              project: "Automated Library Management System",
-              team: "03 Members",
-            },
-            {
-              center: "Centre for Green Technology",
-              project: "Solar Powered Water Purification Unit",
-              team: "04 Members",
-            },
-            {
-              center: "Robotics Excellence Center",
-              project: "Wireless Gesture Controlled Robotic Arm",
-              team: "02 Members",
-            },
-          ].map((item, idx) => (
-            <div key={idx} className="completed-project-card">
-              <div className="completed-card-img">
-                <svg width="30" height="30" fill="#ddd" viewBox="0 0 24 24">
-                  <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
-                </svg>
-              </div>
-              <div className="completed-card-left">
-                <div>
-                  <div style={{ fontWeight: "bold" }}>{item.center}</div>
-                  <div style={{ fontSize: "13px", color: "#666" }}>
-                    {item.project}
-                  </div>
-                  <div
+          {completedProjects.length === 0 ? (
+            <p>No completed projects</p>
+          ) : (
+            completedProjects.map((project, idx) => (
+              <div key={idx} className="completed-project-card">
+                <div className="completed-card-img">
+                  <img
+                    src={project.projectImageUrl}
+                    alt={project.projectName}
                     style={{
-                      fontSize: "11px",
-                      color: "#888",
-                      marginTop: "4px",
-                      fontWeight: "600",
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: "8px",
                     }}
-                  >
-                    👥 Team Size: {item.team}
+                  />
+                </div>
+
+                <div className="completed-card-left">
+                  <div>
+                    <div style={{ fontWeight: "bold" }}>
+                      {project.centerName}
+                    </div>
+
+                    <div style={{ fontSize: "13px", color: "#666" }}>
+                      {project.projectName}
+                    </div>
                   </div>
                 </div>
+
+                <div className="check-icon">✔</div>
               </div>
-              <div className="check-icon">
-                <svg
-                  width="14"
-                  height="14"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    d="M5 13l4 4L19 7"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         {/* Achievements Sidebar */}

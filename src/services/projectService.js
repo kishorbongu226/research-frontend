@@ -66,6 +66,11 @@ const projectService = {
     headers: getAuthHeader(),
   });
 },
+getProjectsByStudent: async (registerNo) => {
+  return await axios.get(`${BASE_URL}/student/${registerNo}/projects`, {
+    headers: getAuthHeader(),
+  });
+},
 };
 
 export default projectService;

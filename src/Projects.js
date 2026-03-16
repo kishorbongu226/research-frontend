@@ -132,7 +132,7 @@ const Projects = () => {
         .projects-table thead th {
           color: white;
           font-weight: 700;
-          text-align: left;
+          text-align: center;
           padding: 18px 20px;
           font-size: 13px;
           text-transform: uppercase;
@@ -173,8 +173,9 @@ const Projects = () => {
         }
 
         .col-title {
+          
           min-width: 350px;
-          max-width: 450px;
+          max-width: 600px;
           font-weight: 600;
           color: #1a202c;
         }
@@ -355,7 +356,7 @@ const Projects = () => {
             className={`filter-tab ${activeTab === "completed" ? "active" : ""}`}
             onClick={() => setActiveTab("completed")}
           >
-            Completed ({projects.filter((p) => p.status === "Completed").length}
+            Completed ({projects.filter((p) => p.status === "COMPLETED").length}
             )
           </button>
         </div>
@@ -368,11 +369,11 @@ const Projects = () => {
                 <tr>
                   <th className="col-sno">S. No.</th>
                   <th className="col-title">Project Title</th>
-                  <th className="col-funding">Funding Agency / Scheme</th>
+
                   <th className="col-pi">PI</th>
-                  <th className="col-copi">Co-PI/Mentor</th>
+
                   <th className="col-course">Course</th>
-                  <th className="col-year">Year(s)</th>
+
                   <th className="col-status">Status</th>
                 </tr>
               </thead>
@@ -382,11 +383,11 @@ const Projects = () => {
                     <tr key={project.id}>
                       <td className="col-sno">{index + 1}</td>
                       <td className="col-title">{project.title}</td>
-                      <td className="col-funding">{project.fundingAgency}</td>
+
                       <td className="col-pi">{project.pi}</td>
-                      <td className="col-copi">{project.coPI || "-"}</td>
+
                       <td className="col-course">{project.course}</td>
-                      <td className="col-year">{project.year}</td>
+
                       <td className="col-status">
                         <span
                           className={`status-badge ${project.status.toLowerCase()}`}

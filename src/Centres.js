@@ -1362,9 +1362,7 @@ const Centres = () => {
               facilityList={facilityList.map((f) => f.facilityName)}
             />
 
-            <h3 className="sidebar-title" style={{ marginTop: "40px" }}>
-              Recent Successful Projects
-            </h3>
+            
           </aside>
         </div>
       </div>

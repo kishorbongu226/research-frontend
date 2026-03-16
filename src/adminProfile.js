@@ -9,7 +9,7 @@ import { useParams } from "react-router-dom";
 const AdminProfile = () => {
   const { registerNo } = useParams();
 
-  const auth = JSON.parse(sessionStorage.getItem("AUTH"));
+  const auth = JSON.parse(sessionStorage.getItem("auth"));
 
   const loggedInRegisterNo = auth?.username;
 
@@ -208,7 +208,7 @@ const AdminProfile = () => {
 
     .rd-photo {
       width: 160px;
-      height: 160px;
+      height: 60px;
       background-color: #eee;
       border-radius: 8px;
       display: flex;
@@ -459,7 +459,7 @@ const AdminProfile = () => {
                   alt="Smart Traffic Management System"
                   style={{
                     width: "100%",
-                    height: "100%",
+                    height: "60%",
                     objectFit: "cover",
                     borderRadius: "8px",
                   }}
@@ -488,7 +488,7 @@ const AdminProfile = () => {
                     </p>
                   </div>
                   <div className="rd-role-info">
-                    <div className="role-badge">Lead Developer</div>
+                    <div className="role-badge">HEAD</div>
                     <br />
                     <div className="team-badge">👥 Team Size: 05</div>
                   </div>

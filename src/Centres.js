@@ -1262,7 +1262,7 @@ const Centres = () => {
 
             {/* Projects */}
             <div className="breadcrumb-bar">
-              <h2>PROJECTS</h2>
+              <h2>ONGOING PROJECTS</h2>
             </div>
             <div className="projects-list" id="projects-list">
               {loadingProjects ? (
@@ -1270,88 +1270,189 @@ const Centres = () => {
               ) : projects.length === 0 ? (
                 <p>No projects available</p>
               ) : (
-                projects.map((proj) => (
-                  <div key={proj.projectId} className="project-card">
-                    <div className="project-img-box">
-                      <img src={proj.imageUrl} alt={proj.title} />
-                    </div>
-                    <div className="project-info">
-                      <div className="project-info-top">
-                        <div>
-                          <h4>{proj.title}</h4>
-                          <p>
-                            <strong>Skills Required:</strong>{" "}
-                            {proj.skillRequirements}
-                          </p>
+                projects
+                  .filter((proj) => proj.projectStatus === "ONGOING")
+                  .map((proj) => (
+                    <div key={proj.projectId} className="project-card">
+                      <div className="project-img-box">
+                        <img src={proj.imageUrl} alt={proj.title} />
+                      </div>
+                      <div className="project-info">
+                        <div className="project-info-top">
+                          <div>
+                            <h4>{proj.title}</h4>
+                            <p>
+                              <strong>Skills Required:</strong>{" "}
+                              {proj.skillRequirements}
+                            </p>
 
-                          <p>
-                            <strong>Status:</strong>{" "}
-                            <span
+                            <p>
+                              <strong>Status:</strong>{" "}
+                              <span
+                                style={{
+                                  padding: "4px 10px",
+                                  borderRadius: "12px",
+                                  fontSize: "12px",
+                                  fontWeight: "600",
+                                  background:
+                                    proj.projectStatus === "ONGOING"
+                                      ? "#fffbea"
+                                      : "#edf2f7",
+                                  color:
+                                    proj.projectStatus === "ONGOING"
+                                      ? "#b7791f"
+                                      : "#4a5568",
+                                }}
+                              >
+                                {proj.projectStatus}
+                              </span>
+                            </p>
+                          </div>
+                          <Heart size={20} className="heart-icon" />
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "10px",
+                            marginTop: "12px",
+                          }}
+                        >
+                          <button
+                            className="view-more-link"
+                            style={{ position: "static" }}
+                            onClick={() =>
+                              navigate(`/project/${proj.projectId}`)
+                            }
+                          >
+                            View More →
+                          </button>
+
+                          {isAdmin && proj.projectStatus !== "COMPLETED" && (
+                            <button
                               style={{
-                                padding: "4px 10px",
-                                borderRadius: "12px",
+                                padding: "6px 12px",
+                                borderRadius: "6px",
+                                border: "none",
+                                background: "#2f855a",
+                                color: "white",
                                 fontSize: "12px",
-                                fontWeight: "600",
-                                background:
-                                  proj.projectStatus === "ONGOING"
-                                    ? "#fffbea"
-                                    : "#edf2f7",
-                                color:
-                                  proj.projectStatus === "ONGOING"
-                                    ? "#b7791f"
-                                    : "#4a5568",
+                                cursor: "pointer",
+                              }}
+                              onClick={async () => {
+                                try {
+                                  await projectService.markProjectCompleted(
+                                    proj.projectId,
+                                  );
+                                  fetchProjects();
+                                } catch (err) {
+                                  console.error(err);
+                                }
                               }}
                             >
-                              {proj.projectStatus}
-                            </span>
-                          </p>
+                              Mark Completed
+                            </button>
+                          )}
                         </div>
-                        <Heart size={20} className="heart-icon" />
-                      </div>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "10px",
-                          marginTop: "12px",
-                        }}
-                      >
-                        <button
-                          className="view-more-link"
-                          style={{ position: "static" }}
-                          onClick={() => navigate(`/project/${proj.projectId}`)}
-                        >
-                          View More →
-                        </button>
-
-                        {isAdmin && proj.projectStatus !== "COMPLETED" && (
-                          <button
-                            style={{
-                              padding: "6px 12px",
-                              borderRadius: "6px",
-                              border: "none",
-                              background: "#2f855a",
-                              color: "white",
-                              fontSize: "12px",
-                              cursor: "pointer",
-                            }}
-                            onClick={async () => {
-                              try {
-                                await projectService.markProjectCompleted(
-                                  proj.projectId,
-                                );
-                                fetchProjects();
-                              } catch (err) {
-                                console.error(err);
-                              }
-                            }}
-                          >
-                            Mark Completed
-                          </button>
-                        )}
                       </div>
                     </div>
-                  </div>
-                ))
+                  ))
+              )}
+            </div>
+            <div className="breadcrumb-bar">
+              <h2>COMPLETED PROJECTS</h2>
+            </div>
+            <div className="projects-list" id="projects-list">
+              {loadingProjects ? (
+                <p>Loading projects...</p>
+              ) : projects.length === 0 ? (
+                <p>No projects available</p>
+              ) : (
+                projects
+                  .filter((proj) => proj.projectStatus === "COMPLETED")
+                  .map((proj) => (
+                    <div key={proj.projectId} className="project-card">
+                      <div className="project-img-box">
+                        <img src={proj.imageUrl} alt={proj.title} />
+                      </div>
+                      <div className="project-info">
+                        <div className="project-info-top">
+                          <div>
+                            <h4>{proj.title}</h4>
+                            <p>
+                              <strong>Skills Required:</strong>{" "}
+                              {proj.skillRequirements}
+                            </p>
+
+                            <p>
+                              <strong>Status:</strong>{" "}
+                              <span
+                                style={{
+                                  padding: "4px 10px",
+                                  borderRadius: "12px",
+                                  fontSize: "12px",
+                                  fontWeight: "600",
+                                  background:
+                                    proj.projectStatus === "ONGOING"
+                                      ? "#fffbea"
+                                      : "#edf2f7",
+                                  color:
+                                    proj.projectStatus === "ONGOING"
+                                      ? "#b7791f"
+                                      : "#4a5568",
+                                }}
+                              >
+                                {proj.projectStatus}
+                              </span>
+                            </p>
+                          </div>
+                          <Heart size={20} className="heart-icon" />
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "10px",
+                            marginTop: "12px",
+                          }}
+                        >
+                          <button
+                            className="view-more-link"
+                            style={{ position: "static" }}
+                            onClick={() =>
+                              navigate(`/project/${proj.projectId}`)
+                            }
+                          >
+                            View More →
+                          </button>
+
+                          {isAdmin && proj.projectStatus !== "COMPLETED" && (
+                            <button
+                              style={{
+                                padding: "6px 12px",
+                                borderRadius: "6px",
+                                border: "none",
+                                background: "#2f855a",
+                                color: "white",
+                                fontSize: "12px",
+                                cursor: "pointer",
+                              }}
+                              onClick={async () => {
+                                try {
+                                  await projectService.markProjectCompleted(
+                                    proj.projectId,
+                                  );
+                                  fetchProjects();
+                                } catch (err) {
+                                  console.error(err);
+                                }
+                              }}
+                            >
+                              Mark Completed
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
               )}
             </div>
           </div>
@@ -1361,8 +1462,6 @@ const Centres = () => {
             <SidebarFacilities
               facilityList={facilityList.map((f) => f.facilityName)}
             />
-
-            
           </aside>
         </div>
       </div>

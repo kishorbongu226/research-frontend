@@ -1282,6 +1282,8 @@ export default function Dashboard() {
                   borderRadius: 4,
                   flexShrink: 0,
                   overflow: "hidden",
+                  position: "relative", // ✅ IMPORTANT
+                  cursor: "pointer",
                 }}
               >
                 <img
@@ -1289,6 +1291,22 @@ export default function Dashboard() {
                   alt={c.name}
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    width: "100%",
+                    background:
+                      "linear-gradient(to top, rgba(0,0,0,0.7), transparent)",
+                    color: "#fff",
+                    padding: "10px",
+                    fontSize: "14px",
+                    fontWeight: "700",
+                  }}
+                >
+                  {c.name}
+                </div>
               </div>
             ))}
           </div>

@@ -1272,13 +1272,19 @@ const Project = () => {
           <div className="section-heading">Centre Leadership &amp; Members</div>
           <div className="members-strip">
             {members.map((m, i) => (
-              <div className={`member-card${i === 0 ? " active" : ""}`} key={i}>
+              <div
+                className={`member-card${i === 0 ? " active" : ""}`}
+                key={i}
+                onClick={() => {
+                  navigate(`/adminProfile`); // 👈 navigate to profile
+                }}
+                style={{ cursor: i === 0 ? "pointer" : "default" }}
+              >
                 <div className="member-avatar">👤</div>
                 <div className="member-name">{m.name}</div>
                 <div className="member-role">{m.role}</div>
               </div>
             ))}
-            <button className="arrow-btn">›</button>
           </div>
 
           {/* Info cards */}

@@ -56,7 +56,7 @@ const Project = () => {
   const [draft, setDraft] = useState({});
 
   const [uploadedReports, setUploadedReports] = useState([]);
-  const [showReportsDropdown, setShowReportsDropdown] = useState(false);
+  
   const [pendingLastReport, setPendingLastReport] = useState(null);
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [isProjectCompleted, setIsProjectCompleted] = useState(false);
@@ -1213,11 +1213,7 @@ const Project = () => {
                 >
                   <span>📄</span> Upload PDF
                 </button>
-                <button
-                  className={`progress-dropdown-btn${showReportsDropdown ? ' open' : ''}`}
-                  onClick={() => setShowReportsDropdown(v => !v)}
-                  title="View uploaded reports"
-                >
+               
                   <span className="chevron">▾</span>
                 </button>
                 {showReportsDropdown && (

@@ -29,8 +29,10 @@ const deleteFacility = (facilityId) => {
   return axiosInstance.delete(`/${facilityId}`);
 };
 
-export default {
+const facilityService = {
   getFacilitiesByCenter,
   addFacility,
   deleteFacility,
 };
+
+export default facilityService;

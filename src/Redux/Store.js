@@ -1,10 +1,10 @@
-import {createStore} from 'redux';
+
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import {persistStore, persistReducer} from 'redux-persist' ;
 import storage from 'redux-persist/lib/storage';
 import Reducer from './Reducer';
 
-//const store = createStore(Reducer);
+
 const persistConfig = {
     key : "root",
     storage: storage
@@ -23,7 +23,7 @@ export const persistor = persistStore(store);
 
 
 // function configureStore(state = { rotating: true }) {
-//     return createStore(Reducer,state);
+
 //   }
   
 //   export default configureStore;

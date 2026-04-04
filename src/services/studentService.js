@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API = "http://localhost:8080/api/v1.0";
+const API = "http://49.249.61.246:9097/api/v1.0";
 
 // Helper to get Basic Auth header from sessionStorage
 const getAuthHeader = () => {

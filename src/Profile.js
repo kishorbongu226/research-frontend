@@ -1,5 +1,9 @@
 import Header from "./Header";
-import React, { useEffect, useMemo, useState } from "react";
+
+
+
+import React, { useEffect, useState, useCallback ,useMemo} from "react";
+
 import studentService from "./services/studentService";
 import projectService from "./services/projectService";
 import { useNavigate, useParams } from "react-router-dom";
@@ -25,14 +29,9 @@ const Profile = () => {
     achievements: "",
   });
 
-  useEffect(() => {
-    if (studentRegisterNo) {
-      fetchStudent();
-      fetchProjects();
-    }
-  }, [studentRegisterNo]);
 
-  const fetchStudent = async () => {
+
+  const fetchStudent = useCallback(async () => {
     try {
       const response = await studentService.getStudent(studentRegisterNo);
       setStudent(response.data);
@@ -43,7 +42,8 @@ const Profile = () => {
     } catch (error) {
       console.error("Error fetching student:", error);
     }
-  };
+
+  }, [studentRegisterNo]);
 
   const fetchProjects = async () => {
     try {
@@ -63,6 +63,12 @@ const Profile = () => {
       console.error("Error fetching projects:", error);
     }
   };
+    useEffect(() => {
+    if (studentRegisterNo) {
+      fetchStudent();
+      fetchProjects();
+    }
+  }, [studentRegisterNo, fetchStudent]);
 
   const handleSaveProfile = async () => {
     try {

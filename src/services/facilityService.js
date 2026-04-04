@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/api/v1.0/facilities";
+const API_URL = "http://49.249.61.246:9097/api/v1.0/facilities";
 
 const axiosInstance = axios.create({
   baseURL: API_URL,
@@ -29,8 +29,10 @@ const deleteFacility = (facilityId) => {
   return axiosInstance.delete(`/${facilityId}`);
 };
 
-export default {
+const facilityService = {
   getFacilitiesByCenter,
   addFacility,
   deleteFacility,
 };
+
+export default facilityService;

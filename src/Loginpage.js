@@ -32,7 +32,7 @@ function Loginpage() {
 
       // Test login by hitting a protected endpoint
       const response = await axios.get(
-        "http://localhost:8080/api/v1.0/centers", // any protected endpoint
+        "http://49.249.61.246:9097/api/v1.0/centers", // any protected endpoint
         {
           headers: { Authorization: basicAuth },
           validateStatus: () => true,

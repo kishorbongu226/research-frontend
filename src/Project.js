@@ -83,7 +83,7 @@ const Project = () => {
   const [draft, setDraft] = useState({});
 
   const [uploadedReports, setUploadedReports] = useState([]);
-  const [showReportsDropdown, setShowReportsDropdown] = useState(false);
+  
   const [pendingLastReport, setPendingLastReport] = useState(null);
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [isProjectCompleted, setIsProjectCompleted] = useState(false);
@@ -1403,7 +1403,76 @@ const Project = () => {
               </div>
             </div>
           </div>
+
           {/* Members */}
+
+
+          {/* Progress Box */}
+          {/* <div className="progress-box">
+            <div className="progress-box-header">
+              <div className="progress-box-title">Progress</div>
+              <div className="progress-box-right">
+                <input type="file" accept=".pdf" hidden ref={reportInputRef} onChange={handleReportUpload} />
+                <button
+                  className="progress-upload-btn"
+                  onClick={() => reportInputRef.current.click()}
+                  disabled={uploadedReports.length >= TOTAL_REPORTS}
+                  title={uploadedReports.length >= TOTAL_REPORTS ? 'All reports uploaded' : 'Upload PDF report'}
+                >
+                  <span>📄</span> Upload PDF
+                </button>
+               
+                  <span className="chevron">▾</span>
+                </button>
+                {showReportsDropdown && (
+                  <div className="progress-dropdown-menu">
+                    <div className="dropdown-menu-head">
+                      <span className="dropdown-menu-head-title">Uploaded Reports</span>
+                      <span className="dropdown-menu-head-count">{uploadedReports.length} / {TOTAL_REPORTS}</span>
+                    </div>
+                    {uploadedReports.length === 0 ? (
+                      <div className="dropdown-empty">
+                        <span className="dropdown-empty-icon">📭</span>
+                        No reports uploaded yet
+                      </div>
+                    ) : (
+                      uploadedReports.map((r, i) => (
+                        <div className="dropdown-report-item" key={i}>
+                          <div className="report-pdf-icon">📄</div>
+                          <div className="report-details">
+                            <div className="report-name">{r.name}</div>
+                            <div className="report-meta">{r.date} &nbsp;·&nbsp; {r.size}</div>
+                          </div>
+                          <div className="report-index">#{i + 1}</div>
+                          <button className="report-download-btn" onClick={() => handleDownloadReport(r)} title="Download PDF">⬇</button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="progress-desc-row">
+              <div className="progress-desc-text">Total number of reports to be uploaded</div>
+              <div className="progress-count-badge">{uploadedReports.length} / {TOTAL_REPORTS}</div>
+            </div>
+            <div className="progress-track">
+              <div
+                className="progress-fill"
+                style={{
+                  width: `${progressPercent}%`,
+                  background: progressPercent === 100
+                    ? 'linear-gradient(90deg, #10b981, #059669)'
+                    : progressPercent >= 50
+                    ? 'linear-gradient(90deg, #f59e0b, #d97706)'
+                    : 'linear-gradient(90deg, #8a1538, #c0254d)',
+                }}
+              />
+            </div>
+            <div className="progress-percent-label">{progressPercent}% complete</div>
+          </div> */}
+
+
           {/* Members */}
           <div className="section-heading">Centre Leadership &amp; Members</div>
           <div className="members-strip">

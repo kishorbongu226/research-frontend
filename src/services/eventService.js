@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8080/api/v1.0";
+const BASE_URL = "http://49.249.61.246:9097/api/v1.0";
 
 const getAuthHeader = () => {
   const auth = sessionStorage.getItem("auth");

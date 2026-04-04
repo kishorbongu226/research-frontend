@@ -1,23 +1,29 @@
-import prof from "./assets/prof.png";
-import person from "./assets/system.jpg";
-import system from "./assets/system.jpg";
 import Header from "./Header";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import studentService from "./services/studentService";
 import projectService from "./services/projectService";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+
+const defaultDescription =
+  "Add a short profile summary so faculty and teammates can understand your interests, strengths, and goals.";
 
 const Profile = () => {
   const { registerNo } = useParams();
-
-  const auth = JSON.parse(sessionStorage.getItem("auth"));
-
+  const navigate = useNavigate();
+  const auth = JSON.parse(sessionStorage.getItem("auth") || "{}");
   const loggedInRegisterNo = auth?.username;
-
   const studentRegisterNo = registerNo || loggedInRegisterNo;
+  const canEditProfile = studentRegisterNo === loggedInRegisterNo;
+
   const [student, setStudent] = useState(null);
   const [ongoingProjects, setOngoingProjects] = useState([]);
   const [completedProjects, setCompletedProjects] = useState([]);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    profileDescription: "",
+    achievements: "",
+  });
 
   useEffect(() => {
     if (studentRegisterNo) {
@@ -30,15 +36,19 @@ const Profile = () => {
     try {
       const response = await studentService.getStudent(studentRegisterNo);
       setStudent(response.data);
+      setProfileForm({
+        profileDescription: response.data.profileDescription || "",
+        achievements: response.data.achievements || "",
+      });
     } catch (error) {
       console.error("Error fetching student:", error);
     }
   };
+
   const fetchProjects = async () => {
     try {
       const response =
         await projectService.getProjectsByStudent(studentRegisterNo);
-      console.log("Projects API:", response.data);
       const ongoing = response.data.filter(
         (p) => p.projectStatus === "ONGOING",
       );
@@ -53,6 +63,35 @@ const Profile = () => {
       console.error("Error fetching projects:", error);
     }
   };
+
+  const handleSaveProfile = async () => {
+    try {
+      setIsSavingProfile(true);
+      const response = await studentService.updateStudentProfile(
+        studentRegisterNo,
+        profileForm,
+      );
+      setStudent(response.data);
+      setProfileForm({
+        profileDescription: response.data.profileDescription || "",
+        achievements: response.data.achievements || "",
+      });
+      setIsEditingProfile(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to save profile details");
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const achievementItems = useMemo(() => {
+    const raw = student?.achievements || "";
+    return raw
+      .split(/\r?\n/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }, [student?.achievements]);
 
   const css = `
     :root {
@@ -77,38 +116,6 @@ const Profile = () => {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       color: #333;
       line-height: 1.5;
-    }
-
-    .navbar {
-      background-color: var(--maroon);
-      color: white;
-      padding: 12px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-
-    .nav-left {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .nav-link {
-      color: white;
-      text-decoration: none;
-      text-transform: uppercase;
     }
 
     .main-layout {
@@ -174,6 +181,66 @@ const Profile = () => {
       color: var(--gray-text);
       font-size: 15px;
       text-align: left;
+      white-space: pre-wrap;
+    }
+
+    .profile-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .primary-btn,
+    .secondary-btn {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .primary-btn {
+      background: var(--maroon);
+      color: white;
+    }
+
+    .secondary-btn {
+      background: #edf1f6;
+      color: #334155;
+    }
+
+    .edit-block {
+      margin-top: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .edit-label {
+      color: var(--maroon);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+
+    .edit-textarea {
+      width: 100%;
+      min-height: 110px;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #d6dbe3;
+      font: inherit;
+      resize: vertical;
+    }
+
+    .helper-text {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 6px;
     }
 
     .info-grid {
@@ -203,30 +270,33 @@ const Profile = () => {
       text-align: left;
     }
 
-    .project-header {
-      background-color: var(--header-purple);
-      padding: 10px 20px;
-      border-radius: 8px 8px 0 0;
-      font-size: 14px;
-      font-weight: 600;
-      border: 1px solid #ddd;
-      border-bottom: none;
+    .completed-project-card {
+      background: var(--white);
+      border-radius: 12px;
+      border: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+      overflow: hidden;
+      min-height: 100px;
+      padding: 0 18px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .project-body {
-      background: var(--white);
-      padding: 25px;
-      border-radius: 0 0 8px 8px;
-      border: 1px solid #ddd;
-      margin-bottom: 30px;
-      display: flex;
-      flex-direction: column;
+    .completed-project-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.08);
     }
 
     .rd-content-wrapper {
       display: flex;
       gap: 20px;
       align-items: flex-start;
+      width: 100%;
+      padding: 18px 0;
     }
 
     .rd-photo {
@@ -239,6 +309,7 @@ const Profile = () => {
       justify-content: center;
       flex-shrink: 0;
       border: 1px solid #ddd;
+      overflow: hidden;
     }
 
     .rd-details-container {
@@ -256,24 +327,6 @@ const Profile = () => {
       text-align: right;
     }
 
-    .project-name {
-      font-size: 22px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-
-    .team-badge {
-      display: inline-block;
-      margin-top: 8px;
-      background-color: #f3f4f6;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #666;
-      border: 1px solid #e5e7eb;
-    }
-
     .role-badge {
       display: inline-block;
       background-color: var(--maroon);
@@ -284,45 +337,6 @@ const Profile = () => {
       font-size: 14px;
       font-weight: bold;
       text-transform: uppercase;
-    }
-
-    .progress-container {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin-top: 20px;
-    }
-
-    .progress-text {
-      font-weight: bold;
-      font-size: 16px;
-      white-space: nowrap;
-    }
-
-    .progress-bar-bg {
-      flex-grow: 1;
-      height: 12px;
-      background-color: var(--progress-bg);
-      border-radius: 6px;
-      overflow: hidden;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      background-color: var(--progress-fill);
-    }
-
-    .completed-project-card {
-      background: var(--white);
-      border-radius: 12px;
-      border: 1px solid #eee;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-      overflow: hidden;
-      min-height: 100px;
     }
 
     .completed-card-left {
@@ -342,6 +356,7 @@ const Profile = () => {
       justify-content: center;
       flex-shrink: 0;
       border-left: 1px solid #eee;
+      overflow: hidden;
     }
 
     .check-icon {
@@ -368,6 +383,14 @@ const Profile = () => {
     .medal-icon {
       color: #f1c40f;
       flex-shrink: 0;
+      font-weight: 700;
+      min-width: 20px;
+    }
+
+    .empty-text {
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.6;
     }
 
     @media (max-width: 900px) {
@@ -393,7 +416,7 @@ const Profile = () => {
         flex-direction: column;
         align-items: center;
       }
-      .rd-detail-container {
+      .rd-details-container {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
@@ -418,24 +441,15 @@ const Profile = () => {
         border-top: 1px solid #eee;
       }
     }
-
-    .rd-details-wrapper{
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-    }
   `;
 
   return (
     <div>
       <style>{css}</style>
-
-      {/* Navbar */}
       <Header />
 
       <div className="main-layout">
         <div className="container">
-          {/* Profile Card */}
           <div className="profile-card">
             <div className="profile-header">
               <div className="avatar-placeholder">
@@ -452,14 +466,81 @@ const Profile = () => {
               <div>
                 <h1 className="bio-title">{student?.name}</h1>
                 <p className="bio-text">
-                  I am a Computer Science Engineering student with a strong
-                  interest in technology, web development, and problem-solving.
-                  I enjoy learning new tools and technologies and applying them
-                  to real-world projects. I am motivated, curious, and always
-                  eager to improve my skills through hands-on experience.
+                  {student?.profileDescription || defaultDescription}
                 </p>
+
+                {canEditProfile && !isEditingProfile && (
+                  <div className="profile-actions">
+                    <button
+                      className="primary-btn"
+                      onClick={() => setIsEditingProfile(true)}
+                    >
+                      Edit Description & Achievements
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
+
+            {canEditProfile && isEditingProfile && (
+              <div className="edit-block">
+                <div>
+                  <div className="edit-label">Profile Description</div>
+                  <textarea
+                    className="edit-textarea"
+                    value={profileForm.profileDescription}
+                    onChange={(e) =>
+                      setProfileForm((prev) => ({
+                        ...prev,
+                        profileDescription: e.target.value,
+                      }))
+                    }
+                    placeholder="Write a short introduction about yourself"
+                  />
+                </div>
+
+                <div>
+                  <div className="edit-label">Achievements</div>
+                  <textarea
+                    className="edit-textarea"
+                    value={profileForm.achievements}
+                    onChange={(e) =>
+                      setProfileForm((prev) => ({
+                        ...prev,
+                        achievements: e.target.value,
+                      }))
+                    }
+                    placeholder="Add one achievement per line"
+                  />
+                  <div className="helper-text">
+                    Enter each achievement on a new line.
+                  </div>
+                </div>
+
+                <div className="profile-actions">
+                  <button
+                    className="primary-btn"
+                    onClick={handleSaveProfile}
+                    disabled={isSavingProfile}
+                  >
+                    {isSavingProfile ? "Saving..." : "Save Profile"}
+                  </button>
+                  <button
+                    className="secondary-btn"
+                    onClick={() => {
+                      setProfileForm({
+                        profileDescription: student?.profileDescription || "",
+                        achievements: student?.achievements || "",
+                      });
+                      setIsEditingProfile(false);
+                    }}
+                    disabled={isSavingProfile}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="info-grid">
               <div className="info-item">
@@ -484,19 +565,22 @@ const Profile = () => {
               </div>
               <div className="info-item">
                 <span className="label">No. of Project:&nbsp;&nbsp;</span>
-                <span>{student?.applications?.length || 0}</span>
+                <span>{student?.applicationCount || 0}</span>
               </div>
             </div>
           </div>
 
-          {/* Projects Section */}
           <h2 className="section-title">Current Project</h2>
 
           {ongoingProjects.length === 0 ? (
-            <p>No ongoing projects</p>
+            <p className="empty-text">No ongoing projects</p>
           ) : (
             ongoingProjects.map((project, index) => (
-              <div key={index} className="completed-project-card">
+              <div
+                key={index}
+                className="completed-project-card"
+                onClick={() => navigate(`/project/${project.projectId}`)}
+              >
                 <div className="rd-content-wrapper">
                   <div className="rd-photo">
                     <img
@@ -543,16 +627,19 @@ const Profile = () => {
             ))
           )}
 
-          {/* Completed Projects Section */}
           <h2 className="section-title" style={{ marginTop: "40px" }}>
             Completed Projects
           </h2>
 
           {completedProjects.length === 0 ? (
-            <p>No completed projects</p>
+            <p className="empty-text">No completed projects</p>
           ) : (
             completedProjects.map((project, idx) => (
-              <div key={idx} className="completed-project-card">
+              <div
+                key={idx}
+                className="completed-project-card"
+                onClick={() => navigate(`/project/${project.projectId}`)}
+              >
                 <div className="completed-card-img">
                   <img
                     src={project.projectImageUrl}
@@ -578,69 +665,44 @@ const Profile = () => {
                   </div>
                 </div>
 
-                <div className="check-icon">✔</div>
+                <div className="check-icon">OK</div>
               </div>
             ))
           )}
         </div>
 
-        {/* Achievements Sidebar */}
         <div className="achievements-sidebar">
           <div className="profile-card" style={{ padding: "20px" }}>
             <h2 className="section-title" style={{ fontSize: "18px" }}>
               Achievements
             </h2>
 
-            <div className="achievement-item">
-              <div className="medal-icon">🏆</div>
-              <div>
-                <div style={{ fontSize: "14px", fontWeight: "bold" }}>
-                  First Prize
+            {achievementItems.length === 0 ? (
+              <p className="empty-text">
+                {canEditProfile
+                  ? "Add your achievements from the edit button in your profile section."
+                  : "No achievements added yet."}
+              </p>
+            ) : (
+              achievementItems.map((achievement, index) => (
+                <div
+                  key={`${achievement}-${index}`}
+                  className="achievement-item"
+                  style={
+                    index === achievementItems.length - 1
+                      ? { border: "none", paddingBottom: 0, marginBottom: 0 }
+                      : {}
+                  }
+                >
+                  <div className="medal-icon">{index + 1}.</div>
+                  <div>
+                    <div style={{ fontSize: "14px", fontWeight: "bold" }}>
+                      {achievement}
+                    </div>
+                  </div>
                 </div>
-                <div style={{ fontSize: "12px", color: "#666" }}>
-                  Inter-College Hackathon 2024
-                </div>
-              </div>
-            </div>
-
-            <div className="achievement-item">
-              <div className="medal-icon">🥇</div>
-              <div>
-                <div style={{ fontSize: "14px", fontWeight: "bold" }}>
-                  Gold Medalist
-                </div>
-                <div style={{ fontSize: "12px", color: "#666" }}>
-                  Academic Excellence in CSE
-                </div>
-              </div>
-            </div>
-
-            <div className="achievement-item">
-              <div className="medal-icon">📜</div>
-              <div>
-                <div style={{ fontSize: "14px", fontWeight: "bold" }}>
-                  Published Paper
-                </div>
-                <div style={{ fontSize: "12px", color: "#666" }}>
-                  International Journal of AI
-                </div>
-              </div>
-            </div>
-
-            <div
-              className="achievement-item"
-              style={{ border: "none", padding: "0" }}
-            >
-              <div className="medal-icon">⭐</div>
-              <div>
-                <div style={{ fontSize: "14px", fontWeight: "bold" }}>
-                  Dean's List
-                </div>
-                <div style={{ fontSize: "12px", color: "#666" }}>
-                  Six consecutive semesters
-                </div>
-              </div>
-            </div>
+              ))
+            )}
           </div>
         </div>
       </div>

@@ -31,11 +31,36 @@ const defaultSkills = [
 ];
 
 const TOTAL_REPORTS = 4;
+const DEFAULT_TEAM_SIZE = 6;
+const parseLeadershipMembers = (serializedMembers, directorName) => {
+  if (serializedMembers) {
+    try {
+      const parsedMembers = JSON.parse(serializedMembers);
+      if (Array.isArray(parsedMembers) && parsedMembers.length > 0) {
+        return parsedMembers;
+      }
+    } catch (error) {
+      console.error("Failed to parse leadership members:", error);
+    }
+  }
+
+  return directorName ? [{ name: directorName, role: "Head" }] : [];
+};
+
+const normalizeTeamSize = (value) => {
+  const parsedValue = Number(value);
+  if (Number.isFinite(parsedValue) && parsedValue > 0) {
+    return parsedValue;
+  }
+
+  return DEFAULT_TEAM_SIZE;
+};
 
 const Project = () => {
   const auth = JSON.parse(sessionStorage.getItem("auth"));
 
   const isUser = auth?.role === "End-User";
+  const isAdmin = auth?.role === "ADMIN" || auth?.role === "Admin";
   const { centerId } = useParams();
   const navigate = useNavigate();
   const { projectId } = useParams();
@@ -47,8 +72,10 @@ const Project = () => {
   const [responsibilities, setResponsibilities] = useState([]);
   const [skills, setSkills] = useState([]);
   const [involvedStudents, setInvolvedStudents] = useState([]);
-  const [totalStudents, setTotalStudents] = useState(6);
+  const [totalStudents, setTotalStudents] = useState(DEFAULT_TEAM_SIZE);
   const [imageUrl, setImageUrl] = useState("");
+  const [isLoadingProject, setIsLoadingProject] = useState(true);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const [liked, setLiked] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -97,48 +124,68 @@ const Project = () => {
     }
     e.target.value = "";
   };
+  const fetchProject = async () => {
+    try {
+      setIsLoadingProject(true);
+      const [projectResponse, studentsRes] = await Promise.all([
+        projectService.getProjectById(projectId),
+        projectService.getStudentsByProject(projectId),
+      ]);
+
+      const data = projectResponse.data;
+
+      setTitle(data.title);
+      setImageUrl(data.imageUrl);
+      setIsProjectCompleted(data.projectStatus === "COMPLETED");
+      setTotalStudents(normalizeTeamSize(data.teamSize));
+      setMembers(
+        parseLeadershipMembers(data.leadershipMembers, data.directorName),
+      );
+
+      const descriptionParts = (data.description || "").split(/\n\s*\n/);
+      setDescription1(descriptionParts[0] || "");
+      setDescription2(descriptionParts.slice(1).join("\n\n"));
+
+      setResponsibilities(
+        data.responsibilities
+          ? data.responsibilities
+              .split(",")
+              .map((item) => item.trim())
+              .filter(Boolean)
+          : [],
+      );
+
+      setSkills(
+        data.skillRequirements
+          ? data.skillRequirements
+              .split(",")
+              .map((item) => item.trim())
+              .filter(Boolean)
+          : [],
+      );
+
+      const students = (studentsRes.data || []).map((s) => ({
+        applicationId: s.applicationId,
+        registerNo: s.registerNo,
+        name: s.name,
+        dept: s.branch,
+        year: s.year,
+        img:
+          s.profileImageUrl ||
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(
+            s.name || "Student",
+          )}&background=801033&color=fff`,
+      }));
+
+      setInvolvedStudents(students);
+    } catch (error) {
+      console.error("Error fetching project:", error);
+    } finally {
+      setIsLoadingProject(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProject = async () => {
-      try {
-        const response = await projectService.getProjectById(projectId);
-        const data = response.data;
-
-        setTitle(data.title);
-        setDescription1(data.description);
-        setMembers([{ name: data.directorName, role: "Head" }]);
-        setImageUrl(data.imageUrl);
-
-        setResponsibilities(
-          data.responsibilities
-            ? data.responsibilities.split(",").map((item) => item.trim())
-            : [],
-        );
-
-        setSkills(
-          data.skillRequirements
-            ? data.skillRequirements.split(",").map((item) => item.trim())
-            : [],
-        );
-
-        // 🔥 NEW API CALL
-        const studentsRes =
-          await projectService.getStudentsByProject(projectId);
-
-        const students = studentsRes.data.map((s) => ({
-          registerNo: s.registerNo,
-          name: s.name,
-          dept: s.branch,
-          year: s.year,
-          img: s.profileImageUrl,
-        }));
-
-        setInvolvedStudents(students);
-      } catch (error) {
-        console.error("Error fetching project:", error);
-      }
-    };
-
     fetchProject();
   }, [projectId]);
 
@@ -182,7 +229,26 @@ const Project = () => {
     graduation: "",
   });
 
+  const teamMembers = [
+    ...members.map((member, index) => ({
+      ...member,
+      isLead: index === 0,
+      profilePath: "/adminProfile",
+    })),
+    ...involvedStudents.map((student) => ({
+      name: student.name,
+      role: `${student.dept || "Student"}${student.year ? `, ${student.year}` : ""}`,
+      isLead: false,
+      profilePath: student.registerNo ? `/student/${student.registerNo}` : null,
+    })),
+  ];
+  const isTeamFull = involvedStudents.length >= totalStudents;
+
   const openEditModal = () => {
+    if (!isAdmin) {
+      return;
+    }
+
     setDraft({
       title,
       description1,
@@ -197,16 +263,61 @@ const Project = () => {
     setShowEditModal(true);
   };
 
-  const saveEdit = () => {
-    setTitle(draft.title);
-    setDescription1(draft.description1);
-    setDescription2(draft.description2);
-    setMembers(draft.members);
-    setResponsibilities(draft.responsibilities);
-    setSkills(draft.skills);
-    setInvolvedStudents(draft.involvedStudents);
-    setTotalStudents(Number(draft.totalStudents) || 6);
-    setShowEditModal(false);
+  const saveEdit = async () => {
+    try {
+      setIsSavingEdit(true);
+
+      const sanitizedMembers = (draft.members || [])
+        .map((member) => ({
+          name: (member.name || "").trim(),
+          role: (member.role || "").trim(),
+        }))
+        .filter((member) => member.name || member.role);
+
+      const removedStudents = involvedStudents.filter(
+        (student) =>
+          !draft.involvedStudents.some(
+            (draftStudent) =>
+              draftStudent.applicationId === student.applicationId,
+          ),
+      );
+
+      await Promise.all(
+        removedStudents
+          .filter((student) => student.applicationId)
+          .map((student) =>
+            projectService.removeStudentFromProject(
+              projectId,
+              student.applicationId,
+            ),
+          ),
+      );
+
+      await projectService.updateProject(projectId, {
+        title: draft.title,
+        description: [draft.description1, draft.description2]
+          .filter((item) => item && item.trim())
+          .join("\n\n"),
+        responsibilities: (draft.responsibilities || [])
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .join(", "),
+        skillRequirements: (draft.skills || [])
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .join(", "),
+        teamSize: normalizeTeamSize(draft.totalStudents),
+        leadershipMembers: JSON.stringify(sanitizedMembers),
+      });
+
+      await fetchProject();
+      setShowEditModal(false);
+    } catch (error) {
+      console.error("Failed to save project edits:", error);
+      alert("Failed to save project changes");
+    } finally {
+      setIsSavingEdit(false);
+    }
   };
 
   const updateDraftMember = (i, field, val) => {
@@ -260,7 +371,6 @@ const Project = () => {
       involvedStudents: d.involvedStudents.filter((_, idx) => idx !== i),
     }));
 
-  const MAX_STUDENTS = 6;
   const [showTeamFull, setShowTeamFull] = useState(false);
 
   const handleInputChange = (e) => {
@@ -268,7 +378,10 @@ const Project = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
   const handleApplyClick = () => {
-    if (involvedStudents.length >= MAX_STUDENTS) {
+    if (isProjectCompleted) {
+      return;
+    }
+    if (isTeamFull) {
       setShowTeamFull(true);
       return;
     }
@@ -302,6 +415,16 @@ const Project = () => {
   const handleSubmit = async () => {
     setTriedSubmit(true);
 
+    if (isProjectCompleted) {
+      alert("Completed projects do not accept applications.");
+      return;
+    }
+
+    if (isTeamFull) {
+      setShowTeamFull(true);
+      return;
+    }
+
     const allFieldsFilled = Object.values(formData).every(
       (v) => v.trim() !== "",
     );
@@ -331,7 +454,11 @@ const Project = () => {
       setShowSuccess(true);
     } catch (error) {
       console.error("Application submission failed:", error);
-      alert("Failed to submit application");
+      alert(
+        error?.response?.data?.message ||
+          error?.response?.data ||
+          "Failed to submit application",
+      );
     }
   };
   const handleCloseSuccess = () => {
@@ -414,6 +541,10 @@ const Project = () => {
           gap: 24px;
         }
         .main-content { flex: 1; min-width: 0; }
+        .main-wrapper {
+          width: 100%;
+          overflow-x: hidden;
+        }
 
         /* ── HERO CARD ── */
         .hero-card {
@@ -450,7 +581,11 @@ const Project = () => {
         .section-heading { font-size: 17px; font-weight: 700; color: #1a1a1a; margin-bottom: 14px; }
 
         /* ── MEMBERS STRIP ── */
-        .members-strip { display: flex; gap: 14px; margin-bottom: 26px; align-items: stretch; }
+        .members-strip {
+          display: flex; gap: 14px; margin-bottom: 26px; align-items: stretch;
+          scrollbar-width: none;
+        }
+        .members-strip::-webkit-scrollbar { display: none; }
         .member-card {
           flex: 1; background: #e6e6e6; border-radius: 12px;
           padding: 18px 12px 14px; display: flex; flex-direction: column;
@@ -630,6 +765,13 @@ const Project = () => {
         }
         .sidebar-edit-btn:hover { background: #6b0f2a; transform: scale(1.1); box-shadow: 0 5px 16px rgba(138,21,56,0.45); }
         .sidebar-edit-btn svg { width: 17px; height: 17px; fill: white; }
+        .sidebar-edit-btn-label {
+          margin-left: 8px;
+          color: white;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+        }
 
         .sidebar {
           background: white; border-radius: 14px; overflow: hidden;
@@ -668,6 +810,12 @@ const Project = () => {
         }
         .mobile-edit-btn:hover { background: #6b0f2a; transform: scale(1.1); box-shadow: 0 5px 16px rgba(138,21,56,0.45); }
         .mobile-edit-btn svg { width: 17px; height: 17px; fill: white; }
+        .mobile-edit-btn-label {
+          margin-left: 8px;
+          color: white;
+          font-size: 12px;
+          font-weight: 700;
+        }
 
         /* ── MODALS ── */
         .modal-overlay {
@@ -1016,21 +1164,53 @@ const Project = () => {
           .mobile-students-section { display: block; }
           .mobile-edit-btn-wrap { display: flex; }
 
-          .page-layout { padding: 20px 16px 40px 16px; gap: 18px; }
+          .page-layout {
+            padding: 20px 16px 40px 16px;
+            gap: 18px;
+            flex-direction: column;
+          }
+          .main-content { width: 100%; }
 
           /* Hero: stack image above text */
           .hero-card { flex-direction: column; padding: 16px; gap: 16px; }
           .hero-img-wrap { width: 100%; height: 210px; }
           .hero-body { padding-right: 0; }
-          .hero-title { font-size: 22px; }
+          .hero-title { font-size: 22px; max-width: calc(100% - 44px); }
           .hero-like-btn { top: 12px; right: 12px; }
 
           /* Members: horizontal scroll */
-          .members-strip { overflow-x: auto; padding-bottom: 6px; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
-          .member-card { min-width: 115px; flex: 0 0 115px; }
+          .members-strip {
+            overflow-x: auto;
+            padding-bottom: 6px;
+            flex-wrap: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x proximity;
+          }
+          .member-card { min-width: 132px; flex: 0 0 132px; scroll-snap-align: start; }
 
           /* Info cards still 2 col */
           .cards-grid { gap: 14px; }
+
+          /* Students */
+          .mobile-students-section {
+            margin-bottom: 22px;
+          }
+          .mobile-students-section .sidebar {
+            border-radius: 14px;
+          }
+          .mobile-students-section .sidebar-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+          .mobile-students-section .sidebar-student {
+            min-width: 0;
+            align-items: flex-start;
+          }
+          .student-name {
+            white-space: normal;
+            overflow: visible;
+            text-overflow: unset;
+          }
 
           /* Form */
           .form-body { padding: 24px 20px; }
@@ -1057,7 +1237,7 @@ const Project = () => {
           .hero-card { padding: 14px; gap: 12px; border-radius: 12px; margin-bottom: 18px; }
           .hero-img-wrap { height: 175px; }
           .hero-title { font-size: 18px; margin-bottom: 10px; }
-          .hero-description { font-size: 13px; }
+          .hero-description { font-size: 13px; line-height: 1.65; text-align: left; }
           .hero-like-btn { width: 30px; height: 30px; font-size: 14px; top: 10px; right: 10px; }
 
           /* Progress box */
@@ -1080,8 +1260,8 @@ const Project = () => {
           .section-heading { font-size: 15px; margin-bottom: 10px; }
 
           /* Members */
-          .members-strip { gap: 10px; margin-bottom: 18px; }
-          .member-card { min-width: 90px; flex: 0 0 90px; padding: 12px 8px 10px; gap: 6px; border-radius: 10px; }
+          .members-strip { gap: 10px; margin-bottom: 18px; padding-bottom: 4px; }
+          .member-card { min-width: 110px; flex: 0 0 110px; padding: 12px 8px 10px; gap: 6px; border-radius: 10px; }
           .member-avatar { width: 40px; height: 40px; font-size: 20px; }
           .member-name { font-size: 11px; }
           .member-role { font-size: 10px; }
@@ -1096,10 +1276,19 @@ const Project = () => {
           /* Inline students grid on mobile */
           .mobile-students-section { border-radius: 12px; overflow: hidden; margin-bottom: 18px; }
           .mobile-students-section .sidebar { border-radius: 12px; }
-          .mobile-students-section .sidebar-list { display: grid; grid-template-columns: 1fr 1fr; }
+          .mobile-students-section .sidebar-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            padding: 12px;
+            background: #fff;
+          }
           .mobile-students-section .sidebar-student {
-            padding: 10px 10px; gap: 8px;
-            border-right: 1px solid #f4f4f4;
+            padding: 12px; gap: 10px;
+            border-right: none;
+            border: 1px solid #f0e8eb;
+            border-radius: 12px;
+            background: #fcfbfb;
           }
           .mobile-students-section .sidebar-student:nth-child(even) { border-right: none; }
           .student-photo { width: 42px; height: 42px; border-radius: 6px; }
@@ -1116,8 +1305,16 @@ const Project = () => {
 
           /* Modals: slide up from bottom */
           .modal-overlay { padding: 0; align-items: flex-end; }
-          .modal-box { border-radius: 20px 20px 0 0; max-height: 95vh; }
-          .edit-modal-box { border-radius: 20px 20px 0 0; max-height: 95vh; }
+          .modal-box {
+            border-radius: 20px 20px 0 0;
+            max-height: 95vh;
+            min-height: min(78vh, 700px);
+          }
+          .edit-modal-box {
+            border-radius: 20px 20px 0 0;
+            max-height: 95vh;
+            min-height: min(78vh, 700px);
+          }
           .success-modal { border-radius: 20px; width: 92%; }
           .modal-overlay.center-modal { align-items: center; padding: 20px; }
 
@@ -1139,11 +1336,16 @@ const Project = () => {
           .edit-modal-head h2 { font-size: 14px; }
           .edit-tab { padding: 10px 12px; font-size: 11.5px; }
           .edit-body { padding: 16px 14px; }
-          .edit-footer { padding: 12px 14px 16px; gap: 10px; }
+          .edit-footer {
+            padding: 12px 14px calc(16px + env(safe-area-inset-bottom, 0px));
+            gap: 10px;
+            flex-wrap: wrap;
+          }
           .cancel-btn { padding: 9px 18px; font-size: 13px; }
           .save-btn { padding: 9px 22px; font-size: 13px; }
           .student-edit-row { grid-template-columns: 1fr; }
           .member-grid { grid-template-columns: 1fr; }
+          .cancel-btn, .save-btn { width: 100%; }
         }
 
         /* ════════════════════════════════════════
@@ -1156,27 +1358,30 @@ const Project = () => {
           .progress-dropdown-menu { width: calc(100vw - 40px); }
           .mobile-students-section .sidebar-list { grid-template-columns: 1fr; }
           .mobile-students-section .sidebar-student { border-right: none; }
-          .member-card { min-width: 80px; flex: 0 0 80px; }
+          .member-card { min-width: 92px; flex: 0 0 92px; }
           .cards-grid { gap: 10px; }
           .form-control { font-size: 13px; }
+          .edit-tab { padding: 10px 10px; font-size: 11px; }
         }
       `}</style>
 
       <Header />
-
       <div className="page-layout">
         <div className="main-content">
-          <div className="mobile-edit-btn-wrap">
-            <button
-              className="mobile-edit-btn"
-              onClick={openEditModal}
-              title="Edit project details"
-            >
-              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-              </svg>
-            </button>
-          </div>
+          {isAdmin && (
+            <div className="mobile-edit-btn-wrap">
+              <button
+                className="mobile-edit-btn"
+                onClick={openEditModal}
+                title="Edit project details"
+              >
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                </svg>
+                <span className="mobile-edit-btn-label">Edit</span>
+              </button>
+            </div>
+          )}
 
           {/* Hero Card */}
           <div className="hero-card">
@@ -1185,7 +1390,7 @@ const Project = () => {
               onClick={() => setLiked(!liked)}
               title={liked ? "Unlike" : "Like"}
             >
-              {liked ? "♥" : "♡"}
+              {liked ? "OK" : "+"}
             </button>
             <div className="hero-img-wrap">
               <img src={imageUrl} className="hero-img" alt="project" />
@@ -1198,91 +1403,24 @@ const Project = () => {
               </div>
             </div>
           </div>
-
-          {/* Progress Box */}
-          {/* <div className="progress-box">
-            <div className="progress-box-header">
-              <div className="progress-box-title">Progress</div>
-              <div className="progress-box-right">
-                <input type="file" accept=".pdf" hidden ref={reportInputRef} onChange={handleReportUpload} />
-                <button
-                  className="progress-upload-btn"
-                  onClick={() => reportInputRef.current.click()}
-                  disabled={uploadedReports.length >= TOTAL_REPORTS}
-                  title={uploadedReports.length >= TOTAL_REPORTS ? 'All reports uploaded' : 'Upload PDF report'}
-                >
-                  <span>📄</span> Upload PDF
-                </button>
-                <button
-                  className={`progress-dropdown-btn${showReportsDropdown ? ' open' : ''}`}
-                  onClick={() => setShowReportsDropdown(v => !v)}
-                  title="View uploaded reports"
-                >
-                  <span className="chevron">▾</span>
-                </button>
-                {showReportsDropdown && (
-                  <div className="progress-dropdown-menu">
-                    <div className="dropdown-menu-head">
-                      <span className="dropdown-menu-head-title">Uploaded Reports</span>
-                      <span className="dropdown-menu-head-count">{uploadedReports.length} / {TOTAL_REPORTS}</span>
-                    </div>
-                    {uploadedReports.length === 0 ? (
-                      <div className="dropdown-empty">
-                        <span className="dropdown-empty-icon">📭</span>
-                        No reports uploaded yet
-                      </div>
-                    ) : (
-                      uploadedReports.map((r, i) => (
-                        <div className="dropdown-report-item" key={i}>
-                          <div className="report-pdf-icon">📄</div>
-                          <div className="report-details">
-                            <div className="report-name">{r.name}</div>
-                            <div className="report-meta">{r.date} &nbsp;·&nbsp; {r.size}</div>
-                          </div>
-                          <div className="report-index">#{i + 1}</div>
-                          <button className="report-download-btn" onClick={() => handleDownloadReport(r)} title="Download PDF">⬇</button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="progress-desc-row">
-              <div className="progress-desc-text">Total number of reports to be uploaded</div>
-              <div className="progress-count-badge">{uploadedReports.length} / {TOTAL_REPORTS}</div>
-            </div>
-            <div className="progress-track">
-              <div
-                className="progress-fill"
-                style={{
-                  width: `${progressPercent}%`,
-                  background: progressPercent === 100
-                    ? 'linear-gradient(90deg, #10b981, #059669)'
-                    : progressPercent >= 50
-                    ? 'linear-gradient(90deg, #f59e0b, #d97706)'
-                    : 'linear-gradient(90deg, #8a1538, #c0254d)',
-                }}
-              />
-            </div>
-            <div className="progress-percent-label">{progressPercent}% complete</div>
-          </div> */}
-
+          {/* Members */}
           {/* Members */}
           <div className="section-heading">Centre Leadership &amp; Members</div>
           <div className="members-strip">
-            {members.map((m, i) => (
+            {teamMembers.map((member, i) => (
               <div
-                className={`member-card${i === 0 ? " active" : ""}`}
+                className={`member-card${member.isLead ? " active" : ""}`}
                 key={i}
                 onClick={() => {
-                  navigate(`/adminProfile`); // 👈 navigate to profile
+                  if (member.profilePath) {
+                    navigate(member.profilePath);
+                  }
                 }}
-                style={{ cursor: i === 0 ? "pointer" : "default" }}
+                style={{ cursor: member.profilePath ? "pointer" : "default" }}
               >
-                <div className="member-avatar">👤</div>
-                <div className="member-name">{m.name}</div>
-                <div className="member-role">{m.role}</div>
+                <div className="member-avatar">U</div>
+                <div className="member-name">{member.name}</div>
+                <div className="member-role">{member.role}</div>
               </div>
             ))}
           </div>
@@ -1312,33 +1450,31 @@ const Project = () => {
             <StudentsPanel />
           </div>
 
-          {isUser && (
+          {isUser && !isProjectCompleted && (
             <button
-              className={"apply-btn" + (isProjectCompleted ? " completed" : "")}
-              onClick={!isProjectCompleted ? handleApplyClick : undefined}
+              className={"apply-btn" + (isTeamFull ? " completed" : "")}
+              onClick={handleApplyClick}
+              disabled={isTeamFull || isLoadingProject}
             >
-              {isProjectCompleted ? (
-                <>
-                  <span>✓</span> Project Completed
-                </>
-              ) : (
-                "Apply now"
-              )}
+              {isTeamFull ? "Team Full" : "Apply now"}
             </button>
           )}
         </div>
 
         {/* Desktop Sidebar */}
         <div className="sidebar-wrapper">
-          <button
-            className="sidebar-edit-btn"
-            onClick={openEditModal}
-            title="Edit project details"
-          >
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-            </svg>
-          </button>
+          {isAdmin && (
+            <button
+              className="sidebar-edit-btn"
+              onClick={openEditModal}
+              title="Edit project details"
+            >
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+              </svg>
+              <span className="sidebar-edit-btn-label">Edit</span>
+            </button>
+          )}
           <div className="sidebar-sticky">
             <StudentsPanel />
           </div>
@@ -1629,44 +1765,41 @@ const Project = () => {
                   >
                     Involved Students
                   </div>
-                  {draft.involvedStudents.map((s, i) => (
-                    <div key={i} className="student-edit-row">
-                      <input
-                        className="edit-input"
-                        value={s.name}
-                        onChange={(e) =>
-                          updateDraftStudent(i, "name", e.target.value)
-                        }
-                        placeholder="Student name"
-                      />
-                      <input
-                        className="edit-input"
-                        value={s.dept}
-                        onChange={(e) =>
-                          updateDraftStudent(i, "dept", e.target.value)
-                        }
-                        placeholder="Department"
-                      />
-                      <input
-                        className="edit-input"
-                        value={s.year}
-                        onChange={(e) =>
-                          updateDraftStudent(i, "year", e.target.value)
-                        }
-                        placeholder="Year (e.g. 2nd Year)"
-                      />
-                      <button
-                        className="remove-btn"
-                        onClick={() => removeDraftStudent(i)}
-                        title="Remove"
-                      >
-                        ×
-                      </button>
+                  {draft.involvedStudents.length === 0 ? (
+                    <div style={{ color: "#666", fontSize: 13 }}>
+                      No approved students are in this project yet.
                     </div>
-                  ))}
-                  <button className="add-btn" onClick={addDraftStudent}>
-                    ＋ Add Student
-                  </button>
+                  ) : (
+                    draft.involvedStudents.map((s, i) => (
+                      <div key={i} className="student-edit-row">
+                        <input
+                          className="edit-input"
+                          value={s.name}
+                          readOnly
+                          placeholder="Student name"
+                        />
+                        <input
+                          className="edit-input"
+                          value={s.dept}
+                          readOnly
+                          placeholder="Department"
+                        />
+                        <input
+                          className="edit-input"
+                          value={s.year}
+                          readOnly
+                          placeholder="Year"
+                        />
+                        <button
+                          className="remove-btn"
+                          onClick={() => removeDraftStudent(i)}
+                          title="Remove from project"
+                        >
+                          X
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
             </div>
@@ -1677,8 +1810,12 @@ const Project = () => {
               >
                 Cancel
               </button>
-              <button className="save-btn" onClick={saveEdit}>
-                Save Changes
+              <button
+                className="save-btn"
+                onClick={saveEdit}
+                disabled={isSavingEdit}
+              >
+                {isSavingEdit ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>
@@ -1912,7 +2049,7 @@ const Project = () => {
             <div className="team-full-title">Sorry, the team is full!</div>
             <p className="team-full-msg">
               This project has reached its maximum capacity of{" "}
-              <strong>{MAX_STUDENTS} students</strong>. No more applications are
+              <strong>{totalStudents} students</strong>. No more applications are
               being accepted at this time.
             </p>
             <button

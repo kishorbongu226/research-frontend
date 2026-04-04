@@ -145,7 +145,50 @@ function MenuItem({ icon, label, color, hover, onClick }) {
   );
 }
 
-// ─── MODAL ───────────────────────────────────────────────────────────────────
+function CentreHeadHover({ center }) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        background:
+          "linear-gradient(180deg, rgba(18,18,18,0.08) 0%, rgba(18,18,18,0.82) 100%)",
+        color: "#fff",
+        opacity: 0,
+        transition: "opacity 0.22s ease",
+        display: "flex",
+        alignItems: "flex-end",
+        pointerEvents: "none",
+      }}
+      className="centre-head-hover"
+    >
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          padding: "18px",
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "flex-end",
+        }}
+      >
+        <div
+          style={{
+            fontSize: 14,
+            fontWeight: 800,
+            color: "#fff2f6",
+            textAlign: "right",
+            lineHeight: 1.35,
+            maxWidth: 190,
+            letterSpacing: "0.02em",
+          }}
+        >
+          Explore projects in this centre →
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function Modal({ onClose, width, children }) {
   return (
@@ -632,6 +675,9 @@ function SectionBar({ title, rightSlot }) {
 export default function Dashboard() {
   const auth = JSON.parse(sessionStorage.getItem("auth"));
   const isAdmin = auth?.role === "Admin";
+  const isStudent = auth?.role === "End-User";
+  const studentWelcomeMessage =
+    "Welcome! Based on your interests, explore these centres.";
 
   const scrollRef = useRef(null);
   const navigate = useNavigate();
@@ -1020,6 +1066,11 @@ export default function Dashboard() {
             font-size: 13px !important;
           }
         }
+
+        .carousel-item:hover .centre-head-hover,
+        .centre-card:hover .centre-head-hover {
+          opacity: 1 !important;
+        }
       `}</style>
 
       <Header />
@@ -1225,6 +1276,24 @@ export default function Dashboard() {
         className="main-content"
         style={{ maxWidth: "90%", margin: "20px auto", padding: "0 20px" }}
       >
+        {isStudent && studentWelcomeMessage && (
+          <div
+            style={{
+              marginBottom: 22,
+              padding: "16px 18px",
+              borderRadius: 14,
+              background: "linear-gradient(135deg, #fff8e8 0%, #fff1f4 100%)",
+              border: "1px solid #f0d6de",
+              color: "#7a1635",
+              boxShadow: "0 8px 22px rgba(128,0,32,0.08)",
+              fontSize: 15,
+              fontWeight: 700,
+            }}
+          >
+            {"\u{1F44B}"} {studentWelcomeMessage}
+          </div>
+        )}
+
         {/* Recently Viewed Centres */}
         <SectionBar title="RECENTLY VIEWED CENTRES" />
 
@@ -1291,6 +1360,7 @@ export default function Dashboard() {
                   alt={c.name}
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
+                <CentreHeadHover center={c} />
                 <div
                   style={{
                     position: "absolute",
@@ -1372,6 +1442,8 @@ export default function Dashboard() {
                     boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
                     cursor: "pointer",
                     textAlign: "left",
+                    position: "relative",
+                    overflow: "hidden",
                   }}
                 >
                   <img
@@ -1390,6 +1462,7 @@ export default function Dashboard() {
                       display: "block",
                     }}
                   />
+                  <CentreHeadHover center={c} />
                   <span
                     className="centre-card-tag"
                     style={{

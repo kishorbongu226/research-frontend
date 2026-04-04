@@ -18,6 +18,14 @@ const studentService = {
       headers: getAuthHeader(),
     });
   },
+  updateStudentProfile: (registerNo, payload) => {
+    return axios.put(`${API}/student/profile/${registerNo}`, payload, {
+      headers: {
+        ...getAuthHeader(),
+        "Content-Type": "application/json",
+      },
+    });
+  },
 };
 
 export default studentService;

@@ -1103,6 +1103,22 @@ const Centres = () => {
 
             {/* Team Profiles */}
             <div className="team-section">
+              <div
+                style={{
+                  marginBottom: "18px",
+                  padding: "14px 18px",
+                  borderRadius: "12px",
+                  background: "linear-gradient(135deg, #fff7f8 0%, #f7fafc 100%)",
+                  border: "1px solid #ead7de",
+                  color: "#7a1635",
+                  fontSize: "15px",
+                  fontWeight: "600",
+                  lineHeight: "1.6",
+                }}
+              >
+                If you want to know more details about this centre and the
+                projects, contact the profiles below.
+              </div>
               <div className="team-grid">
                 {teamProfiles.slice(0, 4).map((profile) => (
                   <div

@@ -91,9 +91,9 @@ export default function App() {
     e.stopPropagation();
 
     try {
-      const professorId = 2; // 🔥 Replace with logged-in professor id
-
-      await applicationService.declineApplication(id, professorId);
+      await applicationService.declineApplication(id);
+      await fetchPendingApplications();
+      await fetchApprovedApplications();
     } catch (error) {
       console.error("Decline failed:", error);
       alert("Failed to reject application");

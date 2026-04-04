@@ -24,10 +24,26 @@ const projectService = {
       headers: getAuthHeader(),
     });
   },
+  updateProject: async (projectId, projectData) => {
+    return await axios.put(`${BASE_URL}/project/${projectId}`, projectData, {
+      headers: {
+        ...getAuthHeader(),
+        "Content-Type": "application/json",
+      },
+    });
+  },
   getStudentsByProject: async (projectId) => {
     return await axios.get(`${BASE_URL}/project/${projectId}/students`, {
       headers: getAuthHeader(),
     });
+  },
+  removeStudentFromProject: async (projectId, applicationId) => {
+    return await axios.delete(
+      `${BASE_URL}/project/${projectId}/students/${applicationId}`,
+      {
+        headers: getAuthHeader(),
+      },
+    );
   },
 
   createProject: async (projectData, file) => {

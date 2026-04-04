@@ -1,36 +1,63 @@
-import prof from "./assets/prof.png";
-import person from "./assets/system.jpg";
-import system from "./assets/system.jpg";
 import Header from "./Header";
 import React, { useEffect, useState } from "react";
 import professorService from "./services/professorService";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 const AdminProfile = () => {
   const { registerNo } = useParams();
-
-  const auth = JSON.parse(sessionStorage.getItem("auth"));
-
+  const navigate = useNavigate();
+  const auth = JSON.parse(sessionStorage.getItem("auth") || "{}");
   const loggedInRegisterNo = auth?.username;
+  const professorRegisterNo = registerNo || loggedInRegisterNo;
 
-  const studentRegisterNo = registerNo || loggedInRegisterNo;
-  const [student, setStudent] = useState(null);
+  const [professor, setProfessor] = useState(null);
+  const [ongoingProjects, setOngoingProjects] = useState([]);
+  const [completedProjects, setCompletedProjects] = useState([]);
+  const [loadingProjects, setLoadingProjects] = useState(true);
 
   useEffect(() => {
-    if (studentRegisterNo) {
-      fetchStudent();
+    if (!professorRegisterNo) {
+      return;
     }
-  }, [studentRegisterNo]);
 
-  const fetchStudent = async () => {
+    fetchProfessor();
+    fetchProjects();
+  }, [professorRegisterNo]);
+
+  const fetchProfessor = async () => {
     try {
       const response =
-        await professorService.getAdminProfessor(studentRegisterNo);
-      setStudent(response.data);
+        await professorService.getAdminProfessor(professorRegisterNo);
+      setProfessor(response.data);
     } catch (error) {
-      console.error("Error fetching student:", error);
+      console.error("Error fetching professor:", error);
     }
   };
+
+  const fetchProjects = async () => {
+    try {
+      setLoadingProjects(true);
+      const response =
+        await professorService.getAdminProjects(professorRegisterNo);
+      const projects = response.data || [];
+
+      setOngoingProjects(
+        projects.filter((project) => project.projectStatus === "ONGOING"),
+      );
+      setCompletedProjects(
+        projects.filter((project) => project.projectStatus === "COMPLETED"),
+      );
+    } catch (error) {
+      console.error("Error fetching professor projects:", error);
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
+
+  const resolveImage = (project) =>
+    project.imageUrl ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(project.title || "Project")}&background=801033&color=fff`;
+
   const css = `
     :root {
       --maroon: #801033;
@@ -39,8 +66,7 @@ const AdminProfile = () => {
       --gray-text: #555555;
       --light-gray: #e9ecef;
       --progress-bg: #e0e0e0;
-      --progress-fill: #2ecc71;
-      --header-purple: #f0e6f2;
+      --progress-fill: #3498db;
     }
 
     * {
@@ -56,38 +82,6 @@ const AdminProfile = () => {
       line-height: 1.5;
     }
 
-    .navbar {
-      background-color: var(--maroon);
-      color: white;
-      padding: 12px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-
-    .nav-left {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .nav-link {
-      color: white;
-      text-decoration: none;
-      text-transform: uppercase;
-    }
-
     .main-layout {
       display: flex;
       max-width: 1200px;
@@ -100,7 +94,7 @@ const AdminProfile = () => {
       flex: 3;
     }
 
-    .achievements-sidebar {
+    .sidebar {
       flex: 1;
       position: sticky;
       top: 80px;
@@ -119,6 +113,7 @@ const AdminProfile = () => {
       display: flex;
       gap: 30px;
       margin-bottom: 30px;
+      align-items: center;
     }
 
     .avatar-placeholder {
@@ -130,6 +125,7 @@ const AdminProfile = () => {
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      overflow: hidden;
     }
 
     .profile-image {
@@ -137,7 +133,6 @@ const AdminProfile = () => {
       height: 100%;
       object-fit: cover;
       border-radius: 12px;
-      border: none;
     }
 
     .bio-title {
@@ -165,7 +160,17 @@ const AdminProfile = () => {
 
     .info-item {
       display: flex;
-      justify-content: normal;
+    }
+
+    .staff-contact-card {
+      background: #f7f4f5;
+      border: 1px solid #ead7de;
+      border-radius: 14px;
+      padding: 22px;
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 28px;
     }
 
     .label {
@@ -180,24 +185,23 @@ const AdminProfile = () => {
       text-align: left;
     }
 
-    .project-header {
-      background-color: var(--header-purple);
-      padding: 10px 20px;
-      border-radius: 8px 8px 0 0;
-      font-size: 14px;
-      font-weight: 600;
-      border: 1px solid #ddd;
-      border-bottom: none;
-    }
-
     .project-body {
       background: var(--white);
       padding: 25px;
-      border-radius: 0 0 8px 8px;
+      border-radius: 12px;
       border: 1px solid #ddd;
-      margin-bottom: 30px;
+      margin-bottom: 22px;
       display: flex;
       flex-direction: column;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .project-body:hover,
+    .completed-project-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.08);
     }
 
     .rd-content-wrapper {
@@ -207,36 +211,52 @@ const AdminProfile = () => {
     }
 
     .rd-photo {
-      width: 160px;
-      height: 60px;
+      width: 170px;
+      height: 115px;
       background-color: #eee;
       border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      overflow: hidden;
       flex-shrink: 0;
       border: 1px solid #ddd;
     }
 
-    .rd-details-container {
+    .rd-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .rd-detail-container {
+      flex: 1;
+    }
+
+    .rd-details-wrapper {
       display: flex;
-      flex-grow: 1;
+      flex-direction: row;
       justify-content: space-between;
-      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 10px;
     }
 
     .rd-main-info {
       text-align: left;
+      flex: 1;
     }
 
     .rd-role-info {
       text-align: right;
+      flex-shrink: 0;
     }
 
-    .project-name {
-      font-size: 22px;
+    .role-badge {
+      display: inline-block;
+      background-color: var(--maroon);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 14px;
       font-weight: bold;
-      margin-bottom: 10px;
+      text-transform: uppercase;
     }
 
     .team-badge {
@@ -249,17 +269,6 @@ const AdminProfile = () => {
       font-weight: 600;
       color: #666;
       border: 1px solid #e5e7eb;
-    }
-
-    .role-badge {
-      display: inline-block;
-      background-color: var(--maroon);
-      color: white;
-      padding: 6px 14px;
-      border-radius: 4px;
-      font-size: 14px;
-      font-weight: bold;
-      text-transform: uppercase;
     }
 
     .progress-container {
@@ -299,6 +308,8 @@ const AdminProfile = () => {
       box-shadow: 0 2px 5px rgba(0,0,0,0.02);
       overflow: hidden;
       min-height: 100px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .completed-card-left {
@@ -317,7 +328,13 @@ const AdminProfile = () => {
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      border-left: 1px solid #eee;
+      overflow: hidden;
+    }
+
+    .completed-card-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .check-icon {
@@ -346,11 +363,22 @@ const AdminProfile = () => {
       flex-shrink: 0;
     }
 
+    .empty-project-card {
+      background: #fff;
+      border: 1px dashed #d7b6c1;
+      border-radius: 12px;
+      padding: 22px;
+      color: #666;
+      text-align: left;
+      margin-bottom: 20px;
+    }
+
     @media (max-width: 900px) {
       .main-layout {
         flex-direction: column;
       }
-      .achievements-sidebar {
+
+      .sidebar {
         position: static;
         order: 2;
       }
@@ -362,285 +390,237 @@ const AdminProfile = () => {
         align-items: center;
         text-align: center;
       }
+
       .info-grid {
         grid-template-columns: 1fr;
       }
+
+      .staff-contact-card {
+        grid-template-columns: 1fr;
+      }
+
       .rd-content-wrapper {
         flex-direction: column;
-        align-items: center;
       }
-      .rd-detail-container {
-        display: flex;
+
+      .rd-details-wrapper {
         flex-direction: column;
-        align-items: flex-start;
-        text-align: center;
-        width: 100%;
       }
-      .rd-main-info, .rd-role-info {
-        text-align: center;
-      }
+
       .rd-role-info {
-        margin-top: 10px;
+        text-align: left;
       }
+
       .completed-project-card {
         flex-direction: column;
         align-items: stretch;
       }
+
       .completed-card-img {
         width: 100%;
-        height: 120px;
-        border-left: none;
-        border-top: 1px solid #eee;
+        height: 140px;
       }
-    }
-
-    .rd-details-wrapper{
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
     }
   `;
 
   return (
     <div>
       <style>{css}</style>
-
-      {/* Navbar */}
       <Header />
 
       <div className="main-layout">
         <div className="container">
-          {/* Profile Card */}
           <div className="profile-card">
             <div className="profile-header">
               <div className="avatar-placeholder">
                 <img
                   src={
-                    student?.imageURL
-                      ? student.imageURL
-                      : `https://ui-avatars.com/api/?name=${student?.name || "Student"}&background=801033&color=fff`
+                    professor?.imageURL
+                      ? professor.imageURL
+                      : `https://ui-avatars.com/api/?name=${professor?.name || "Professor"}&background=801033&color=fff`
                   }
                   alt="Profile"
                   className="profile-image"
                 />
               </div>
               <div>
-                <h1 className="bio-title">{student?.name}</h1>
+                <h1 className="bio-title">{professor?.name}</h1>
+                <p className="bio-text">
+                  Leads research initiatives, mentors project teams, and
+                  oversees project execution across current and completed work.
+                </p>
               </div>
             </div>
 
             <div className="info-grid">
               <div className="info-item">
-                <span className="label">Register No:&nbsp;&nbsp;</span>
-                <span>{student?.registerNo}</span>
-              </div>
-
-              <div className="info-item">
                 <span className="label">Name:&nbsp;&nbsp;</span>
-                <span>{student?.name}</span>
+                <span>{professor?.name}</span>
               </div>
 
               <div className="info-item">
-                <span className="label">Occupation:&nbsp;&nbsp;</span>
-                <span>{student?.Occupation}</span>
+                <span className="label">Current Projects:&nbsp;&nbsp;</span>
+                <span>{ongoingProjects.length}</span>
+              </div>
+            </div>
+
+            <div className="staff-contact-card">
+              <div className="info-item">
+                <span className="label">Designation:&nbsp;&nbsp;</span>
+                <span>{professor?.designation || professor?.Occupation}</span>
+              </div>
+              <div className="info-item">
+                <span className="label">Personal Email ID:&nbsp;&nbsp;</span>
+                <span>{professor?.personalEmail || "-"}</span>
+              </div>
+              <div className="info-item">
+                <span className="label">
+                  Highest Qualification:&nbsp;&nbsp;
+                </span>
+                <span>{professor?.highestQualification || "-"}</span>
+              </div>
+              <div className="info-item">
+                <span className="label">Official Email ID:&nbsp;&nbsp;</span>
+                <span>{professor?.officialEmail || "-"}</span>
+              </div>
+              <div className="info-item">
+                <span className="label">Phone Number:&nbsp;&nbsp;</span>
+                <span>{professor?.phoneNumber || "-"}</span>
               </div>
             </div>
           </div>
 
-          {/* Projects Section */}
-          <h2 className="section-title">Current Project</h2>
+          <h2 className="section-title">Current Projects</h2>
 
-          {/* Current R&D Box Updated Layout */}
-          <div className="project-body">
-            <div className="rd-content-wrapper">
-              <div className="rd-photo">
-                <img
-                  src={person}
-                  alt="Smart Traffic Management System"
-                  style={{
-                    width: "100%",
-                    height: "60%",
-                    objectFit: "cover",
-                    borderRadius: "8px",
-                  }}
-                />
-              </div>
-              <div className="rd-detail-container">
-                <div className="rd-details-wrapper">
-                  <div className="rd-main-info">
-                    <h3
-                      style={{
-                        fontSize: "18px",
-                        textTransform: "uppercase",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      Smart Traffic Management System
-                    </h3>
-                    <p
-                      style={{
-                        color: "var(--maroon)",
-                        fontWeight: "600",
-                        fontSize: "17px",
-                      }}
-                    >
-                      Advanced AI Research Center
+          {loadingProjects ? (
+            <div className="empty-project-card">
+              Loading current projects...
+            </div>
+          ) : ongoingProjects.length === 0 ? (
+            <div className="empty-project-card">
+              No ongoing projects are assigned to this admin yet.
+            </div>
+          ) : (
+            ongoingProjects.map((project) => (
+              <div
+                key={project.projectId}
+                className="project-body"
+                onClick={() => navigate(`/project/${project.projectId}`)}
+              >
+                <div className="rd-content-wrapper">
+                  <div className="rd-photo">
+                    <img src={resolveImage(project)} alt={project.title} />
+                  </div>
+                  <div className="rd-detail-container">
+                    <div className="rd-details-wrapper">
+                      <div className="rd-main-info">
+                        <h3
+                          style={{
+                            fontSize: "18px",
+                            textTransform: "uppercase",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          {project.title}
+                        </h3>
+                        <p
+                          style={{
+                            color: "var(--maroon)",
+                            fontWeight: "600",
+                            fontSize: "17px",
+                          }}
+                        >
+                          {project.centerName}
+                        </p>
+                      </div>
+                      <div className="rd-role-info">
+                        <div className="role-badge">HEAD</div>
+                        <br />
+                        <div className="team-badge">
+                          {project.projectStatus}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="bio-text">
+                      {project.description ||
+                        "Project description is not available yet."}
                     </p>
                   </div>
-                  <div className="rd-role-info">
-                    <div className="role-badge">HEAD</div>
-                    <br />
-                    <div className="team-badge">👥 Team Size: 05</div>
+                </div>
+                <div className="progress-container">
+                  <span className="progress-text">Progress: Active</span>
+                  <div className="progress-bar-bg">
+                    <div
+                      className="progress-bar-fill"
+                      style={{ width: "100%" }}
+                    ></div>
                   </div>
                 </div>
-                <div>
-                  <p className="bio-text">
-                    I am a Computer Science Engineering student with a strong
-                    interest in technology, web development, and
-                    problem-solving. I enjoy learning new tools and technologies
-                    and applying them to real-world projects. I am motivated,
-                    curious, and always eager to improve my skills through
-                    hands-on experience.
-                  </p>
-                </div>
               </div>
-            </div>
-            <div className="progress-container" style={{ margin: "20px 0 0" }}>
-              <span className="progress-text">Progress: 45%</span>
-              <div className="progress-bar-bg">
-                <div
-                  className="progress-bar-fill"
-                  style={{ width: "45%", backgroundColor: "#3498db" }}
-                ></div>
-              </div>
-            </div>
-          </div>
+            ))
+          )}
 
-          {/* Completed Projects Section */}
           <h2 className="section-title" style={{ marginTop: "40px" }}>
             Completed Projects
           </h2>
 
-          {[
-            /* eslint-disable */
-            {
-              center: "NextGen Innovation Hub",
-              project: "Automated Library Management System",
-              team: "03 Members",
-            },
-            {
-              center: "Centre for Green Technology",
-              project: "Solar Powered Water Purification Unit",
-              team: "04 Members",
-            },
-            {
-              center: "Robotics Excellence Center",
-              project: "Wireless Gesture Controlled Robotic Arm",
-              team: "02 Members",
-            },
-          ].map((item, idx) => (
-            <div key={idx} className="completed-project-card">
-              <div className="completed-card-img">
-                <svg width="30" height="30" fill="#ddd" viewBox="0 0 24 24">
-                  <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
-                </svg>
-              </div>
-              <div className="completed-card-left">
-                <div>
-                  <div style={{ fontWeight: "bold" }}>{item.center}</div>
-                  <div style={{ fontSize: "13px", color: "#666" }}>
-                    {item.project}
+          {loadingProjects ? (
+            <div className="empty-project-card">
+              Loading completed projects...
+            </div>
+          ) : completedProjects.length === 0 ? (
+            <div className="empty-project-card">
+              No completed projects are available for this admin yet.
+            </div>
+          ) : (
+            completedProjects.map((project) => (
+              <div
+                key={project.projectId}
+                className="completed-project-card"
+                onClick={() => navigate(`/project/${project.projectId}`)}
+              >
+                <div className="completed-card-img">
+                  <img src={resolveImage(project)} alt={project.title} />
+                </div>
+                <div className="completed-card-left">
+                  <div>
+                    <div style={{ fontWeight: "bold" }}>
+                      {project.centerName}
+                    </div>
+                    <div style={{ fontSize: "13px", color: "#666" }}>
+                      {project.title}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        color: "#888",
+                        marginTop: "4px",
+                        fontWeight: "600",
+                      }}
+                    >
+                      Director: {project.directorName}
+                    </div>
                   </div>
-                  <div
-                    style={{
-                      fontSize: "11px",
-                      color: "#888",
-                      marginTop: "4px",
-                      fontWeight: "600",
-                    }}
+                </div>
+                <div className="check-icon">
+                  <svg
+                    width="14"
+                    height="14"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    viewBox="0 0 24 24"
                   >
-                    👥 Team Size: {item.team}
-                  </div>
+                    <path
+                      d="M5 13l4 4L19 7"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </div>
               </div>
-              <div className="check-icon">
-                <svg
-                  width="14"
-                  height="14"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    d="M5 13l4 4L19 7"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Achievements Sidebar */}
-        <div className="achievements-sidebar">
-          <div className="profile-card" style={{ padding: "20px" }}>
-            <h2 className="section-title" style={{ fontSize: "18px" }}>
-              Achievements
-            </h2>
-
-            <div className="achievement-item">
-              <div className="medal-icon">🏆</div>
-              <div>
-                <div style={{ fontSize: "14px", fontWeight: "bold" }}>
-                  First Prize
-                </div>
-                <div style={{ fontSize: "12px", color: "#666" }}>
-                  Inter-College Hackathon 2024
-                </div>
-              </div>
-            </div>
-
-            <div className="achievement-item">
-              <div className="medal-icon">🥇</div>
-              <div>
-                <div style={{ fontSize: "14px", fontWeight: "bold" }}>
-                  Gold Medalist
-                </div>
-                <div style={{ fontSize: "12px", color: "#666" }}>
-                  Academic Excellence in CSE
-                </div>
-              </div>
-            </div>
-
-            <div className="achievement-item">
-              <div className="medal-icon">📜</div>
-              <div>
-                <div style={{ fontSize: "14px", fontWeight: "bold" }}>
-                  Published Paper
-                </div>
-                <div style={{ fontSize: "12px", color: "#666" }}>
-                  International Journal of AI
-                </div>
-              </div>
-            </div>
-
-            <div
-              className="achievement-item"
-              style={{ border: "none", padding: "0" }}
-            >
-              <div className="medal-icon">⭐</div>
-              <div>
-                <div style={{ fontSize: "14px", fontWeight: "bold" }}>
-                  Dean's List
-                </div>
-                <div style={{ fontSize: "12px", color: "#666" }}>
-                  Six consecutive semesters
-                </div>
-              </div>
-            </div>
-          </div>
+            ))
+          )}
         </div>
       </div>
     </div>

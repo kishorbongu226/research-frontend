@@ -17,6 +17,7 @@ import Project from "./Project.js";
 import Application from "./Application.js";
 import Projects from "./Projects.js";
 import About from "./about.js";
+import StudentRequests from "./StudentRequests.js";
 function App() {
   return (
     <div className="App">
@@ -32,11 +33,11 @@ function App() {
               <Route path="/application" element={<Application />}></Route>
               <Route path="/about" element={<About />}></Route>
               <Route path="/projects" element={<Projects />}></Route>
-
               <Route path="/profile" element={<Profile />}></Route>
               <Route path="/student/:registerNo" element={<Profile />} />
               <Route path="/profile/:registerNo" element={<AdminProfile />} />
               <Route path="/adminProfile" element={<AdminProfile />} />
+              <Route path="/request" element={<StudentRequests />}></Route>
               {/* <Route path='/dashboard-admin' element={<DashboardA/>}></Route>
               <Route path='/dashboard-super' element={<DashboardS/>}></Route>
               <Route path='/dashboard-management' element={<DashboardM/>}></Route>

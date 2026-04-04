@@ -1,26 +1,44 @@
 import React, { useState, useRef, useEffect } from "react";
 import sathya from "./assets/sathayabama.png";
 import { useNavigate } from "react-router-dom";
+import applicationService from "./services/applicationService";
+
+const formatLocalIsoDate = (date) => {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 const Header = () => {
+  const auth = JSON.parse(sessionStorage.getItem("auth") || "{}");
+  const role = auth?.role;
+  const isStudent = role === "End-User";
+  const registerNo = auth?.username;
+  const seenApprovalsKey = "seenApprovalNotifications";
+  const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const sidebarRef = useRef(null);
+  const hamburgerRef = useRef(null);
+  const [approvalCount, setApprovalCount] = useState(0);
+  const todayIso = formatLocalIsoDate(new Date());
+
   const goToProfile = () => {
-    const auth = JSON.parse(sessionStorage.getItem("auth"));
-    const role = auth?.role;
-    console.log(role);
     if (role === "Admin") {
       navigate("/adminProfile");
     } else {
       navigate("/profile");
     }
   };
+
   const handleLogout = () => {
-    sessionStorage.clear(); // remove AUTH and other session data
-    navigate("/"); // redirect to login/home page
+    sessionStorage.clear();
+    localStorage.removeItem(seenApprovalsKey);
+    setApprovalCount(0);
+    setSidebarOpen(false);
+    window.dispatchEvent(new Event("approvalNotificationsUpdated"));
+    navigate("/", { replace: true });
   };
-  const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const sidebarRef = useRef(null);
-  const hamburgerRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -37,6 +55,44 @@ const Header = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [sidebarOpen]);
+
+  useEffect(() => {
+    const updateApprovalCount = async () => {
+      if (!isStudent || !registerNo) {
+        setApprovalCount(0);
+        return;
+      }
+
+      try {
+        const response =
+          await applicationService.getStudentApplications(registerNo);
+        const approvedIds = (response.data || [])
+          .filter(
+            (application) =>
+              application.status === "APPROVED" &&
+              application.slotDate &&
+              application.slotDate >= todayIso,
+          )
+          .map((application) => application.applicationId);
+
+        const seen = JSON.parse(localStorage.getItem(seenApprovalsKey) || "[]");
+        const unseenCount = approvedIds.filter((id) => !seen.includes(id)).length;
+        setApprovalCount(unseenCount);
+      } catch (error) {
+        console.error("Failed to fetch approval notifications:", error);
+      }
+    };
+
+    updateApprovalCount();
+    window.addEventListener("approvalNotificationsUpdated", updateApprovalCount);
+
+    return () => {
+      window.removeEventListener(
+        "approvalNotificationsUpdated",
+        updateApprovalCount,
+      );
+    };
+  }, [isStudent, registerNo, todayIso]);
 
   const styles = {
     container: {
@@ -126,11 +182,6 @@ const Header = () => {
       fill: "currentColor",
       flexShrink: 0,
     },
-    divider: {
-      height: "1px",
-      backgroundColor: "#eee",
-      margin: "8px 0",
-    },
     sidebarFooter: {
       padding: "16px 0",
       borderTop: "1px solid #eee",
@@ -199,44 +250,63 @@ const Header = () => {
     },
   };
 
-  const navItems = [
-    {
-      label: "Application",
-      path: "/application",
-      icon: (
-        <svg style={styles.sidebarIcon} viewBox="0 0 24 24">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z" />
-        </svg>
-      ),
-    },
-    {
-      label: "Calendar",
-      href: "#",
-      icon: (
-        <svg style={styles.sidebarIcon} viewBox="0 0 24 24">
-          <path d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" />
-        </svg>
-      ),
-    },
-    {
-      label: "Students",
-      href: "#",
-      icon: (
-        <svg style={styles.sidebarIcon} viewBox="0 0 24 24">
-          <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-        </svg>
-      ),
-    },
-  ];
+  const navItems = isStudent
+    ? [
+        {
+          label: "My Status",
+          path: "/request",
+          icon: (
+            <svg style={styles.sidebarIcon} viewBox="0 0 24 24">
+              <path d="M19 3H5a2 2 0 0 0-2 2v14l4-3h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-8 9H7v-2h4v2zm6-4H7V6h10v2z" />
+            </svg>
+          ),
+        },
+        {
+          label: "Calendar",
+          path: "/request",
+          icon: (
+            <svg style={styles.sidebarIcon} viewBox="0 0 24 24">
+              <path d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" />
+            </svg>
+          ),
+        },
+      ]
+    : [
+        {
+          label: "Application",
+          path: "/application",
+          icon: (
+            <svg style={styles.sidebarIcon} viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z" />
+            </svg>
+          ),
+        },
+        {
+          label: "Calendar",
+          path: "/application",
+          icon: (
+            <svg style={styles.sidebarIcon} viewBox="0 0 24 24">
+              <path d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" />
+            </svg>
+          ),
+        },
+        {
+          label: "Students",
+          path: "/application",
+          icon: (
+            <svg style={styles.sidebarIcon} viewBox="0 0 24 24">
+              <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+            </svg>
+          ),
+        },
+      ];
 
   const [hoveredItem, setHoveredItem] = useState(null);
 
   return (
     <div style={styles.container}>
-      {/* Overlay */}
       <div style={styles.overlay} />
 
-      {/* Sidebar */}
       <div ref={sidebarRef} style={styles.sidebar}>
         <div style={styles.sidebarHeader}>
           <img
@@ -249,7 +319,7 @@ const Header = () => {
             }}
           />
           <button style={styles.closeBtn} onClick={() => setSidebarOpen(false)}>
-            ✕
+            x
           </button>
         </div>
 
@@ -300,7 +370,6 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Header */}
       <header style={styles.header}>
         <div style={styles.logoSection}>
           <button
@@ -308,7 +377,7 @@ const Header = () => {
             style={styles.hamburger}
             onClick={() => setSidebarOpen((prev) => !prev)}
           >
-            ☰
+            =
           </button>
           <img
             src={sathya}
@@ -341,15 +410,47 @@ const Header = () => {
             </svg>
           </div>
           <div style={styles.iconGroup}>
-            <svg
-              style={{ cursor: "pointer", fill: "white" }}
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
+            <div
+              onClick={() => {
+                if (isStudent) {
+                  navigate("/request");
+                }
+              }}
+              style={{ position: "relative", cursor: isStudent ? "pointer" : "default" }}
             >
-              <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
-            </svg>
-            
+              <svg
+                style={{ cursor: isStudent ? "pointer" : "default", fill: "white" }}
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+              </svg>
+              {isStudent && approvalCount > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "-6px",
+                    right: "-8px",
+                    minWidth: "18px",
+                    height: "18px",
+                    borderRadius: "999px",
+                    background: "#f7c948",
+                    color: "#5b0f26",
+                    fontSize: "11px",
+                    fontWeight: "800",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "0 5px",
+                    boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+                  }}
+                  title="Upcoming approved meeting slots"
+                >
+                  {approvalCount}
+                </span>
+              )}
+            </div>
           </div>
         </nav>
       </header>

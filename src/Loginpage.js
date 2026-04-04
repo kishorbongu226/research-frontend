@@ -48,6 +48,15 @@ function Loginpage() {
           JSON.stringify({ username: userID, basicAuth, role }),
         );
 
+        if (role === "End-User") {
+          sessionStorage.setItem(
+            "studentWelcomeMessage",
+            "Welcome! Based on your interests, explore these centres.",
+          );
+        } else {
+          sessionStorage.removeItem("studentWelcomeMessage");
+        }
+
         // Optionally store in Redux (without password) for UI
         dispatch(
           User({
@@ -125,11 +134,15 @@ function Loginpage() {
           </div>
 
           <div className="input-group">
-            <label>Username</label>
+            <label>{role === "Admin" ? "College Mail ID" : "Username"}</label>
             <input
               type="text"
               className="input-field"
-              placeholder="Enter your username"
+              placeholder={
+                role === "Admin"
+                  ? "Enter your official college mail id"
+                  : "Enter your username"
+              }
               value={userID}
               onChange={(e) => setUserID(e.target.value)}
               required

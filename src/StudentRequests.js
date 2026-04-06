@@ -328,6 +328,49 @@ const StudentRequests = () => {
           background: #faf7f8;
           border: 1px dashed #ddc7cf;
         }
+
+        @media (max-width: 768px) {
+          .student-requests-shell {
+            padding: 18px 12px 28px;
+          }
+
+          .student-hero {
+            padding: 18px;
+            border-radius: 16px;
+          }
+
+          .student-hero h1 {
+            font-size: 24px;
+          }
+
+          .summary-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+          }
+
+          .summary-value {
+            font-size: 22px;
+          }
+
+          .section-card {
+            padding: 14px;
+            border-radius: 16px;
+          }
+
+          .status-list {
+            grid-template-columns: 1fr;
+          }
+
+          .status-meta-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .summary-grid {
+            grid-template-columns: 1fr;
+          }
+        }
       `}</style>
 
       <Header />

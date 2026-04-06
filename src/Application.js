@@ -17,7 +17,9 @@ export default function App() {
       const formatted = response.data.map((app) => ({
         id: app.applicationId,
         studentName: app.name,
+        registerNo: app.registerNo,
         centreName: app.centerName,
+        projectName: app.projectName || "Project",
         imageUrl: `https://ui-avatars.com/api/?name=${app.name}&background=7d1935&color=fff&size=200`,
       }));
 
@@ -55,6 +57,7 @@ export default function App() {
         graduation: app.graduation,
         centreName: app.centerName,
         projectName: app.projectName,
+        resumeUrl: app.resumeURL || app.resumeUrl || "",
         imageUrl: `https://ui-avatars.com/api/?name=${app.name}&background=7d1935&color=fff&size=200`,
         status: app.status,
         expanded: false,
@@ -64,6 +67,26 @@ export default function App() {
     } catch (error) {
       console.error("Failed to fetch applications:", error);
     }
+  };
+
+  const getResumeFileName = (resumeUrl, registerNumber) => {
+    if (!resumeUrl) return `Student_Resume_${registerNumber || "file"}.pdf`;
+    try {
+      const parsedUrl = new URL(resumeUrl);
+      const fileName = parsedUrl.pathname.split("/").pop();
+      return fileName || `Student_Resume_${registerNumber || "file"}.pdf`;
+    } catch (error) {
+      return `Student_Resume_${registerNumber || "file"}.pdf`;
+    }
+  };
+
+  const handleDownloadResume = (e, app) => {
+    e.stopPropagation();
+    if (!app.resumeUrl) {
+      alert("Resume not available for this application.");
+      return;
+    }
+    window.open(app.resumeUrl, "_blank", "noopener,noreferrer");
   };
 
   useEffect(() => {
@@ -82,7 +105,11 @@ export default function App() {
       await fetchApprovedApplications();
     } catch (error) {
       console.error("Approval failed:", error);
-      alert("Failed to approve application");
+      alert(
+        error?.response?.data?.message ||
+          error?.response?.data ||
+          "Failed to approve application",
+      );
     }
   };
 
@@ -361,6 +388,10 @@ export default function App() {
           cursor: pointer;
           font-weight: 600;
         }
+        .download-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
 
         /* Sidebar: Approved Students */
         .sidebar {
@@ -402,7 +433,7 @@ export default function App() {
         }
 
         .approved-info p {
-          margin: 0;
+          margin: 2px 0 0;
           font-size: 0.75rem;
           color: #888;
         }
@@ -416,6 +447,65 @@ export default function App() {
 
         /* Utility Icons (SVG) */
         .icon { width: 16px; height: 16px; fill: currentColor; }
+
+        @media (max-width: 1024px) {
+          .main-layout {
+            grid-template-columns: 1fr;
+            padding: 20px;
+          }
+
+          .sidebar {
+            order: -1;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .main-layout {
+            padding: 14px;
+            gap: 16px;
+          }
+
+          .applications-section h2 {
+            font-size: 0.95rem;
+          }
+
+          .app-bar {
+            padding: 12px 14px;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+          }
+
+          .action-group {
+            width: 100%;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+          }
+
+          .btn {
+            padding: 7px 12px;
+            font-size: 0.78rem;
+          }
+
+          .app-details {
+            grid-template-columns: 1fr;
+            gap: 14px;
+            padding: 14px;
+          }
+
+          .details-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+          }
+
+          .resume-attachment {
+            grid-column: span 1;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+          }
+        }
       `}</style>
 
       <Header />
@@ -528,7 +618,10 @@ export default function App() {
                                 fontSize: "0.9rem",
                               }}
                             >
-                              Student_Resume_{app.registerNumber}.pdf
+                              {getResumeFileName(
+                                app.resumeUrl,
+                                app.registerNumber,
+                              )}
                             </p>
                             <span
                               style={{ fontSize: "0.75rem", color: "#888" }}
@@ -537,7 +630,11 @@ export default function App() {
                             </span>
                           </div>
                         </div>
-                        <button className="download-btn">
+                        <button
+                          className="download-btn"
+                          onClick={(e) => handleDownloadResume(e, app)}
+                          disabled={!app.resumeUrl}
+                        >
                           <svg
                             className="icon"
                             viewBox="0 0 24 24"
@@ -558,11 +655,11 @@ export default function App() {
           )}
         </section>
 
-        {/* Sidebar: Approved List */}
+        {/* Sidebar: Students Working on Projects */}
         <aside className="sidebar">
-          <h3>Recent Approved Students</h3>
+          <h3>Students Working on Projects</h3>
           {approvedList.length === 0 ? (
-            <p className="empty-state">No approvals in this session.</p>
+            <p className="empty-state">No students are assigned yet.</p>
           ) : (
             approvedList.map((approved) => (
               <div className="approved-card" key={approved.id}>

@@ -1,9 +1,11 @@
 import Header from "./Header";
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import projectService from "./services/projectService";
 const Projects = () => {
   const [projects, setProjects] = useState([]);
   const [activeTab, setActiveTab] = useState("all");
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchProjects();
@@ -147,6 +149,7 @@ const Projects = () => {
         .projects-table tbody tr {
           border-bottom: 1px solid #f0f0f0;
           transition: background-color 0.2s ease;
+          cursor: pointer;
         }
 
         .projects-table tbody tr:hover {
@@ -380,7 +383,10 @@ const Projects = () => {
               <tbody>
                 {filteredProjects.length > 0 ? (
                   filteredProjects.map((project, index) => (
-                    <tr key={project.id}>
+                    <tr
+                      key={project.id}
+                      onClick={() => navigate(`/project/${project.id}`)}
+                    >
                       <td className="col-sno">{index + 1}</td>
                       <td className="col-title">{project.title}</td>
 

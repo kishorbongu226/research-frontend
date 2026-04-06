@@ -219,6 +219,54 @@
     background-color: darkorange;
   }
 
+  @media (max-width: 1024px) {
+    .login-box {
+      width: 52%;
+      max-width: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .main-container {
+      padding: 16px;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 460px;
+      padding: 16px;
+      border-radius: 12px;
+    }
+
+    .college-banner {
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .college-logo {
+      width: 42px;
+      height: 42px;
+      margin-right: 0;
+    }
+
+    .college-title {
+      font-size: 16px;
+      letter-spacing: 3px;
+      padding-right: 0;
+    }
+
+    .college-subtitle {
+      font-size: 9px;
+      white-space: normal;
+    }
+
+    .college-desc,
+    .college-category {
+      font-size: 9px;
+      padding-right: 0;
+    }
+  }
+
 
 
 

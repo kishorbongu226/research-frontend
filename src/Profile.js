@@ -1,8 +1,6 @@
 import Header from "./Header";
 
-
-
-import React, { useEffect, useState, useCallback ,useMemo} from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 
 import studentService from "./services/studentService";
 import projectService from "./services/projectService";
@@ -29,8 +27,6 @@ const Profile = () => {
     achievements: "",
   });
 
-
-
   const fetchStudent = useCallback(async () => {
     try {
       const response = await studentService.getStudent(studentRegisterNo);
@@ -42,7 +38,6 @@ const Profile = () => {
     } catch (error) {
       console.error("Error fetching student:", error);
     }
-
   }, [studentRegisterNo]);
 
   const fetchProjects = async () => {
@@ -63,7 +58,7 @@ const Profile = () => {
       console.error("Error fetching projects:", error);
     }
   };
-    useEffect(() => {
+  useEffect(() => {
     if (studentRegisterNo) {
       fetchStudent();
       fetchProjects();
@@ -550,28 +545,31 @@ const Profile = () => {
 
             <div className="info-grid">
               <div className="info-item">
-                <span className="label">Branch:&nbsp;&nbsp;</span>
-                <span>{student?.branch}</span>
-              </div>
-              <div className="info-item">
-                <span className="label">Email ID:&nbsp;&nbsp;</span>
-                <span>{student?.email}</span>
+                <span className="label">Register No:&nbsp;&nbsp;</span>
+                <span>{student?.registerNo || studentRegisterNo || "-"}</span>
               </div>
               <div className="info-item">
                 <span className="label">Year:&nbsp;&nbsp;</span>
                 <span>{student?.year}</span>
               </div>
-              <div className="info-item">
-                <span className="label">Phone Number:&nbsp;&nbsp;</span>
-                <span>{student?.phoneNumber}</span>
-              </div>
+
               <div className="info-item">
                 <span className="label">Course:&nbsp;&nbsp;</span>
                 <span>{student?.course}</span>
               </div>
               <div className="info-item">
-                <span className="label">No. of Project:&nbsp;&nbsp;</span>
-                <span>{student?.applicationCount || 0}</span>
+                <span className="label">Email ID:&nbsp;&nbsp;</span>
+                <span>{student?.email}</span>
+              </div>
+
+              <div className="info-item">
+                <span className="label">Branch:&nbsp;&nbsp;</span>
+                <span>{student?.branch}</span>
+              </div>
+
+              <div className="info-item">
+                <span className="label">Phone Number:&nbsp;&nbsp;</span>
+                <span>{student?.phoneNumber}</span>
               </div>
             </div>
           </div>

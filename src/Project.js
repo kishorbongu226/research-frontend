@@ -76,6 +76,7 @@ const Project = () => {
   const [imageUrl, setImageUrl] = useState("");
   const [isLoadingProject, setIsLoadingProject] = useState(true);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isMarkingCompleted, setIsMarkingCompleted] = useState(false);
 
   const [liked, setLiked] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -261,6 +262,29 @@ const Project = () => {
     });
     setEditTab("basic");
     setShowEditModal(true);
+  };
+
+  const handleMarkCompleted = async () => {
+    if (!isAdmin || isProjectCompleted || isMarkingCompleted) {
+      return;
+    }
+
+    const ok = window.confirm(
+      "Mark this project as completed? This will stop new applications.",
+    );
+    if (!ok) return;
+
+    try {
+      setIsMarkingCompleted(true);
+      await projectService.markProjectCompleted(projectId);
+      setIsProjectCompleted(true);
+      await fetchProject();
+    } catch (error) {
+      console.error("Failed to mark project completed:", error);
+      alert("Unable to mark project as completed.");
+    } finally {
+      setIsMarkingCompleted(false);
+    }
   };
 
   const saveEdit = async () => {
@@ -563,7 +587,7 @@ const Project = () => {
         .hero-img-wrap { width: 310px; height: 240px; flex-shrink: 0; border-radius: 10px; overflow: hidden; }
         .hero-img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .hero-body { flex: 1; display: flex; flex-direction: column; padding-right: 32px; }
-        .hero-title { font-size: 26px; font-weight: 800; color: #1a1a1a; margin-bottom: 16px; line-height: 1.25; letter-spacing: -0.3px; }
+        .hero-title { font-size: 26px; font-weight: 800; color: #1a1a1a; margin-bottom: 16px; line-height: 1.25; letter-spacing: -0.3px; text-align: left; }
         .hero-description { font-size: 13.5px; line-height: 1.75; color: #555; text-align: justify; }
         .hero-description p + p { margin-top: 14px; }
         .hero-like-btn {
@@ -612,8 +636,14 @@ const Project = () => {
 
         /* ── INFO CARDS ── */
         .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .info-card { background: white; border-radius: 12px; padding: 22px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
-        .card-title { color: #8a1538; font-size: 15px; font-weight: 700; margin-bottom: 14px; }
+        .info-card {
+          background: white;
+          border-radius: 12px;
+          padding: 22px 20px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+          text-align: left;
+        }
+        .card-title { color: #8a1538; font-size: 15px; font-weight: 700; margin-bottom: 14px; text-align: left; }
         .check-list { list-style: none; display: flex; flex-direction: column; gap: 9px; }
         .check-list li { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; color: #333; line-height: 1.55; }
         .check-list li::before { content: '✓'; color: #333; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
@@ -754,8 +784,16 @@ const Project = () => {
           flex-shrink: 0;
           margin-top: 5%;
         }
+        .sidebar-admin-actions {
+          position: absolute;
+          top: -46px;
+          right: 0px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          z-index: 10;
+        }
         .sidebar-edit-btn {
-          position: absolute; top: -46px; right: 0px;
           width: 38px; height: 38px; border-radius: 50%;
           background: #8a1538; border: none;
           display: flex; align-items: center; justify-content: center;
@@ -765,12 +803,23 @@ const Project = () => {
         }
         .sidebar-edit-btn:hover { background: #6b0f2a; transform: scale(1.1); box-shadow: 0 5px 16px rgba(138,21,56,0.45); }
         .sidebar-edit-btn svg { width: 17px; height: 17px; fill: white; }
-        .sidebar-edit-btn-label {
-          margin-left: 8px;
+        .mark-complete-btn {
+          background: linear-gradient(135deg, #2f855a, #1f6f48);
           color: white;
+          border: none;
+          border-radius: 10px;
+          padding: 9px 12px;
           font-size: 12px;
           font-weight: 700;
-          letter-spacing: 0.04em;
+          cursor: pointer;
+          box-shadow: 0 4px 10px rgba(47, 133, 90, 0.35);
+          transition: transform 0.2s ease;
+        }
+        .mark-complete-btn:hover { transform: translateY(-1px); }
+        .mark-complete-btn:disabled {
+          opacity: 0.65;
+          cursor: not-allowed;
+          transform: none;
         }
 
         .sidebar {
@@ -789,18 +838,33 @@ const Project = () => {
           display: flex; align-items: center; gap: 13px;
           padding: 14px 16px; border-bottom: 1px solid #f4f4f4;
           cursor: pointer; transition: background 0.2s;
+          justify-content: flex-start;
         }
         .sidebar-student:last-child { border-bottom: none; }
         .sidebar-student:hover { background: #fdf6f8; }
         .student-photo { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: #e0e0e0; }
-        .student-info { flex: 1; min-width: 0; }
+        .student-info {
+          flex: 1;
+          min-width: 0;
+          text-align: left;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: center;
+        }
         .student-name { font-size: 13.5px; font-weight: 700; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .student-dept { font-size: 12px; color: #666; margin-top: 2px; }
         .student-year { font-size: 12px; color: #666; margin-top: 1px; }
 
         /* ── MOBILE-ONLY STUDENTS INLINE & EDIT BTN ── */
         .mobile-students-section { display: none; margin-bottom: 24px; }
-        .mobile-edit-btn-wrap { display: none; justify-content: flex-end; margin-bottom: 10px; }
+        .mobile-edit-btn-wrap {
+          display: none;
+          justify-content: flex-end;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 10px;
+        }
         .mobile-edit-btn {
           display: flex; align-items: center; justify-content: center;
           width: 38px; height: 38px; border-radius: 50%;
@@ -810,11 +874,29 @@ const Project = () => {
         }
         .mobile-edit-btn:hover { background: #6b0f2a; transform: scale(1.1); box-shadow: 0 5px 16px rgba(138,21,56,0.45); }
         .mobile-edit-btn svg { width: 17px; height: 17px; fill: white; }
-        .mobile-edit-btn-label {
-          margin-left: 8px;
+        .project-bottom-actions {
+          width: 100%;
+          display: flex;
+          justify-content: flex-start;
+          margin: 10px 0 8px;
+        }
+        .project-bottom-mark-btn {
+          background: linear-gradient(135deg, #2f855a, #1f6f48);
           color: white;
-          font-size: 12px;
+          border: none;
+          border-radius: 10px;
+          padding: 12px 18px;
+          font-size: 14px;
           font-weight: 700;
+          cursor: pointer;
+          box-shadow: 0 6px 14px rgba(47, 133, 90, 0.35);
+          transition: transform 0.2s ease;
+        }
+        .project-bottom-mark-btn:hover { transform: translateY(-1px); }
+        .project-bottom-mark-btn:disabled {
+          opacity: 0.65;
+          cursor: not-allowed;
+          transform: none;
         }
 
         /* ── MODALS ── */
@@ -1375,23 +1457,31 @@ const Project = () => {
                 onClick={openEditModal}
                 title="Edit project details"
               >
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                <svg
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
                 </svg>
-                <span className="mobile-edit-btn-label">Edit</span>
               </button>
             </div>
           )}
 
           {/* Hero Card */}
           <div className="hero-card">
-            <button
+            {/* <button
               className={"hero-like-btn" + (liked ? " liked" : "")}
               onClick={() => setLiked(!liked)}
               title={liked ? "Unlike" : "Like"}
             >
               {liked ? "OK" : "+"}
-            </button>
+            </button> */}
             <div className="hero-img-wrap">
               <img src={imageUrl} className="hero-img" alt="project" />
             </div>
@@ -1533,22 +1623,44 @@ const Project = () => {
         {/* Desktop Sidebar */}
         <div className="sidebar-wrapper">
           {isAdmin && (
-            <button
-              className="sidebar-edit-btn"
-              onClick={openEditModal}
-              title="Edit project details"
-            >
-              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-              </svg>
-              <span className="sidebar-edit-btn-label">Edit</span>
-            </button>
+            <div className="sidebar-admin-actions">
+              <button
+                className="sidebar-edit-btn"
+                onClick={openEditModal}
+                title="Edit project details"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                </svg>
+              </button>
+            </div>
           )}
           <div className="sidebar-sticky">
             <StudentsPanel />
           </div>
         </div>
       </div>
+
+      {isAdmin && !isProjectCompleted && (
+        <div className="project-bottom-actions">
+          <button
+            className="project-bottom-mark-btn"
+            onClick={handleMarkCompleted}
+            disabled={isMarkingCompleted}
+          >
+            {isMarkingCompleted ? "Marking..." : "Mark Completed"}
+          </button>
+        </div>
+      )}
 
       {/* Completion Confirmation Dialog */}
       {showCompletionDialog && (

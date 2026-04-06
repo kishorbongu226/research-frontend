@@ -32,7 +32,7 @@ function Loginpage() {
 
       // Test login by hitting a protected endpoint
       const response = await axios.get(
-        "http://49.249.61.246:9097/api/v1.0/centers", // any protected endpoint
+        "http://localhost:8080/api/v1.0/centers", // any protected endpoint
         {
           headers: { Authorization: basicAuth },
           validateStatus: () => true,
@@ -40,7 +40,37 @@ function Loginpage() {
       );
 
       if (response.status === 200) {
-        setMessage("✅ Login successful! Redirecting...");
+        if (role === "Admin") {
+          const adminCheck = await axios.get(
+            "http://localhost:8080/api/v1.0/admins",
+            {
+              headers: { Authorization: basicAuth },
+              validateStatus: () => true,
+            },
+          );
+
+          if (adminCheck.status !== 200) {
+            setError("This account is not authorized as Admin.");
+            return;
+          }
+        }
+
+        if (role === "End-User") {
+          const studentCheck = await axios.get(
+            `http://localhost:8080/api/v1.0/student/profile/${userID}`,
+            {
+              headers: { Authorization: basicAuth },
+              validateStatus: () => true,
+            },
+          );
+
+          if (studentCheck.status !== 200) {
+            setError("This account is not authorized as Student.");
+            return;
+          }
+        }
+
+        setMessage("Login successful! Redirecting...");
 
         // Save credentials safely in sessionStorage
         sessionStorage.setItem(
@@ -171,3 +201,4 @@ function Loginpage() {
 }
 
 export default Loginpage;
+

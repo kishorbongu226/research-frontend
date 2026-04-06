@@ -14,14 +14,17 @@ const Header = () => {
   const auth = JSON.parse(sessionStorage.getItem("auth") || "{}");
   const role = auth?.role;
   const isStudent = role === "End-User";
+  const isAdmin = role === "Admin";
   const registerNo = auth?.username;
   const seenApprovalsKey = "seenApprovalNotifications";
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
   const sidebarRef = useRef(null);
   const hamburgerRef = useRef(null);
   const [approvalCount, setApprovalCount] = useState(0);
   const todayIso = formatLocalIsoDate(new Date());
+  const headerHeight = isMobile ? 64 : 80;
 
   const goToProfile = () => {
     if (role === "Admin") {
@@ -41,6 +44,12 @@ const Header = () => {
   };
 
   useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 900);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
     const handleClickOutside = (e) => {
       if (
         sidebarOpen &&
@@ -58,6 +67,17 @@ const Header = () => {
 
   useEffect(() => {
     const updateApprovalCount = async () => {
+      if (isAdmin) {
+        try {
+          const response = await applicationService.getPendingApplications();
+          setApprovalCount((response.data || []).length);
+        } catch (error) {
+          console.error("Failed to fetch admin notifications:", error);
+          setApprovalCount(0);
+        }
+        return;
+      }
+
       if (!isStudent || !registerNo) {
         setApprovalCount(0);
         return;
@@ -92,7 +112,7 @@ const Header = () => {
         updateApprovalCount,
       );
     };
-  }, [isStudent, registerNo, todayIso]);
+  }, [isAdmin, isStudent, registerNo, todayIso]);
 
   const styles = {
     container: {
@@ -118,7 +138,8 @@ const Header = () => {
       position: "fixed",
       top: 0,
       left: 0,
-      width: "260px",
+      width: isMobile ? "85vw" : "260px",
+      maxWidth: "320px",
       height: "100vh",
       backgroundColor: "#fff",
       zIndex: 999,
@@ -201,14 +222,20 @@ const Header = () => {
     header: {
       backgroundColor: "rgb(130, 18, 55)",
       color: "white",
-      padding: "10px 40px",
+      padding: isMobile ? "10px 14px" : "10px 40px",
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-      position: "sticky",
+      position: "fixed",
       top: 0,
+      left: 0,
+      right: 0,
+      width: "100%",
       zIndex: 1000,
       boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
+    },
+    headerSpacer: {
+      height: `${headerHeight}px`,
     },
     logoSection: {
       display: "flex",
@@ -216,7 +243,7 @@ const Header = () => {
       gap: "15px",
     },
     logo: {
-      height: "60px",
+      height: isMobile ? "44px" : "60px",
     },
     hamburger: {
       fontSize: "26px",
@@ -232,7 +259,7 @@ const Header = () => {
     },
     nav: {
       display: "flex",
-      gap: "25px",
+      gap: isMobile ? "12px" : "25px",
       alignItems: "center",
     },
     navItem: {
@@ -242,6 +269,7 @@ const Header = () => {
       fontSize: "14px",
       textTransform: "uppercase",
       cursor: "pointer",
+      display: isMobile ? "none" : "inline",
     },
     iconGroup: {
       display: "flex",
@@ -250,7 +278,46 @@ const Header = () => {
     },
   };
 
-  const navItems = isStudent
+  const baseNavItems = [
+    {
+      label: "Home",
+      path: "/dashboard",
+      icon: (
+        <svg style={styles.sidebarIcon} viewBox="0 0 24 24">
+          <path d="M12 3l9 8h-3v10h-5v-6H11v6H6V11H3l9-8z" />
+        </svg>
+      ),
+    },
+    {
+      label: "About",
+      path: "/about",
+      icon: (
+        <svg style={styles.sidebarIcon} viewBox="0 0 24 24">
+          <path d="M11 7h2V5h-2v2zm0 12h2v-8h-2v8zm1-18C6.48 1 2 5.48 2 11s4.48 10 10 10 10-4.48 10-10S17.52 1 12 1z" />
+        </svg>
+      ),
+    },
+    {
+      label: "Project",
+      path: "/projects",
+      icon: (
+        <svg style={styles.sidebarIcon} viewBox="0 0 24 24">
+          <path d="M10 4H4v16h16V8h-6V4zm2 0v4h4" />
+        </svg>
+      ),
+    },
+    {
+      label: "Profile",
+      path: role === "Admin" ? "/adminProfile" : "/profile",
+      icon: (
+        <svg style={styles.sidebarIcon} viewBox="0 0 24 24">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+        </svg>
+      ),
+    },
+  ];
+
+  const roleNavItems = isStudent
     ? [
         {
           label: "My Status",
@@ -258,15 +325,6 @@ const Header = () => {
           icon: (
             <svg style={styles.sidebarIcon} viewBox="0 0 24 24">
               <path d="M19 3H5a2 2 0 0 0-2 2v14l4-3h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-8 9H7v-2h4v2zm6-4H7V6h10v2z" />
-            </svg>
-          ),
-        },
-        {
-          label: "Calendar",
-          path: "/request",
-          icon: (
-            <svg style={styles.sidebarIcon} viewBox="0 0 24 24">
-              <path d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" />
             </svg>
           ),
         },
@@ -282,17 +340,8 @@ const Header = () => {
           ),
         },
         {
-          label: "Calendar",
-          path: "/application",
-          icon: (
-            <svg style={styles.sidebarIcon} viewBox="0 0 24 24">
-              <path d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" />
-            </svg>
-          ),
-        },
-        {
           label: "Students",
-          path: "/application",
+          path: "/students",
           icon: (
             <svg style={styles.sidebarIcon} viewBox="0 0 24 24">
               <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
@@ -300,6 +349,8 @@ const Header = () => {
           ),
         },
       ];
+
+  const navItems = [...baseNavItems, ...roleNavItems];
 
   const [hoveredItem, setHoveredItem] = useState(null);
 
@@ -409,51 +460,56 @@ const Header = () => {
               <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
             </svg>
           </div>
-          <div style={styles.iconGroup}>
-            <div
-              onClick={() => {
-                if (isStudent) {
-                  navigate("/request");
-                }
-              }}
-              style={{ position: "relative", cursor: isStudent ? "pointer" : "default" }}
-            >
-              <svg
-                style={{ cursor: isStudent ? "pointer" : "default", fill: "white" }}
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
+          {(isStudent || isAdmin) && (
+            <div style={styles.iconGroup}>
+              <div
+                onClick={() => {
+                  navigate(isStudent ? "/request" : "/application");
+                }}
+                style={{ position: "relative", cursor: "pointer" }}
               >
-                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
-              </svg>
-              {isStudent && approvalCount > 0 && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: "-6px",
-                    right: "-8px",
-                    minWidth: "18px",
-                    height: "18px",
-                    borderRadius: "999px",
-                    background: "#f7c948",
-                    color: "#5b0f26",
-                    fontSize: "11px",
-                    fontWeight: "800",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "0 5px",
-                    boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
-                  }}
-                  title="Upcoming approved meeting slots"
+                <svg
+                  style={{ cursor: "pointer", fill: "white" }}
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
                 >
-                  {approvalCount}
-                </span>
-              )}
+                  <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+                </svg>
+                {approvalCount > 0 && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: "-6px",
+                      right: "-8px",
+                      minWidth: "18px",
+                      height: "18px",
+                      borderRadius: "999px",
+                      background: "#f7c948",
+                      color: "#5b0f26",
+                      fontSize: "11px",
+                      fontWeight: "800",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "0 5px",
+                      boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+                    }}
+                    title={
+                      isStudent
+                        ? "Upcoming approved meeting slots"
+                        : "Pending project applications"
+                    }
+                  >
+                    {approvalCount}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </nav>
       </header>
+      <div style={styles.headerSpacer} />
     </div>
   );
 };

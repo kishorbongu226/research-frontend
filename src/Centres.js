@@ -19,7 +19,6 @@ import nano_p from "./assets/nano-project.jpg";
 import frozen from "./assets/frozen.jpg";
 import sensor from "./assets/sensor.jpg";
 import solar from "./assets/solar.jpg";
-import { Check } from "lucide-react";
 import { useParams } from "react-router-dom";
 import centerService from "./services/centerService";
 import projectService from "./services/projectService";
@@ -589,6 +588,25 @@ const Centres = () => {
     if (action === "edit") setShowFacilitiesDialog(true);
   };
 
+  const facilityCards = [
+    {
+      id: "synthesis",
+      title: "Synthesis Facilities",
+      description: "Open synthesis facilities page",
+      image:
+        "https://static.vecteezy.com/system/resources/thumbnails/070/390/136/small_2x/laboratory-microscope-focusing-on-microscopic-sample-for-scientific-research-vector.jpg",
+      link: "https://www.centrefornanotechnology.com/synthesis-facilities.html",
+    },
+    {
+      id: "characterization",
+      title: "Characterization Facilities",
+      description: "Open characterization facilities page",
+      image:
+        "https://static.vecteezy.com/system/resources/thumbnails/001/268/479/small_2x/opened-laptop-isolated.jpg",
+      link: "https://www.centrefornanotechnology.com/characterization-facilities.html",
+    },
+  ];
+
   if (loading) return <div style={{ padding: 20 }}>Loading...</div>;
   if (!centerData) return <div style={{ padding: 20 }}>Center not found</div>;
 
@@ -776,6 +794,13 @@ const Centres = () => {
           display: flex; justify-content: space-between; align-items: center; width: 100%;
         }
         .breadcrumb-bar h2 { color: #800020; margin: 0; font-size: 18px; font-weight: bold; }
+        .breadcrumb-bar.centres-heading {
+          padding: 10px 16px;
+          margin-bottom: 16px;
+        }
+        .breadcrumb-bar.centres-heading h2 {
+          font-size: 16px;
+        }
 
         .consultancy-form-btn {
           background: linear-gradient(135deg, #800020 0%, #8b1e3f 100%);
@@ -833,10 +858,17 @@ const Centres = () => {
         .project-card {
           background: white; border-radius: 12px; display: flex; overflow: hidden;
           position: relative; box-shadow: 0 2px 12px rgba(0,0,0,0.08); transition: all 0.3s ease;
+          align-items: stretch;
         }
         .project-card:hover { transform: translateX(8px); box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
-        .project-img-box { width: 200px; height: 140px; flex-shrink: 0; overflow: hidden; background: #f0f0f0; }
-        .project-img-box img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+        .project-img-box {
+          width: 200px; flex-shrink: 0; overflow: hidden; background: #f0f0f0;
+          align-self: stretch; display: flex;
+        }
+        .project-img-box img {
+          width: 100%; height: 100%; display: block; object-fit: cover; transition: transform 0.3s ease;
+          flex: 1;
+        }
         .project-card:hover .project-img-box img { transform: scale(1.05); }
         .project-info { padding: 24px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
         .project-info-top { display: flex; justify-content: space-between; align-items: start; gap: 16px; }
@@ -845,18 +877,32 @@ const Centres = () => {
         .project-info p strong { color: #4a5568; font-weight: 600; }
         .heart-icon { color: #cbd5e0; cursor: pointer; transition: all 0.3s ease; flex-shrink: 0; }
         .heart-icon:hover { color: #fc8181; transform: scale(1.2); }
-        .view-more-link {
-          position: absolute; bottom: 24px; right: 24px;
-          color: #3b82f6; font-size: 13px; font-weight: 600;
-          border: none; background: none; cursor: pointer;
-          display: inline-flex; align-items: center; gap: 4px;
-          padding: 8px 0; transition: gap 0.3s ease;
+        .mark-completed-btn {
+          padding: 6px 12px;
+          border-radius: 6px;
+          border: none;
+          background: #2f855a;
+          color: white;
+          font-size: 12px;
+          cursor: pointer;
+          margin-left: auto;
+          box-shadow: 0 0 10px rgba(47, 133, 90, 0.65);
+          animation: markCompletedGlow 1.6s ease-in-out infinite;
         }
-        .view-more-link:hover { gap: 8px; text-decoration: underline; }
+        @keyframes markCompletedGlow {
+          0% { box-shadow: 0 0 8px rgba(47, 133, 90, 0.45); }
+          50% { box-shadow: 0 0 18px rgba(47, 133, 90, 0.95); }
+          100% { box-shadow: 0 0 8px rgba(47, 133, 90, 0.45); }
+        }
 
         .sidebar {
           background: white; padding: 32px; border-radius: 16px;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.08); position: sticky; top: 100px;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+          position: fixed; top: 104px;
+          right: max(24px, calc((100vw - 1400px) / 2 + 24px));
+          width: 340px;
+          max-height: calc(100vh - 128px);
+          overflow-y: auto;
         }
         .sidebar-title {
           color: #8b1e3f; font-size: 13px; font-weight: 700; letter-spacing: 2px;
@@ -903,7 +949,10 @@ const Centres = () => {
 
         @media (max-width: 1200px) {
           .content-grid { grid-template-columns: 1fr; }
-          .sidebar { position: relative; top: 0; }
+          .sidebar {
+            position: relative; top: 0; right: auto; width: auto;
+            max-height: none; overflow-y: visible;
+          }
         }
         @media (max-width: 768px) {
           .header { padding: 12px 16px; }
@@ -929,8 +978,9 @@ const Centres = () => {
           margin-bottom: 40px; box-shadow: 0 4px 16px rgba(0,0,0,0.08);
         }
         .facilities-title { font-size: 24px; font-weight: 700; color: #2c3e50; margin: 0 0 24px 0; }
+        .facilities-section-main { margin-bottom: 40px; }
         .facilities-cards {
-          display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 24px; margin-bottom: 40px;
         }
         .facility-card-main {
@@ -1071,12 +1121,11 @@ const Centres = () => {
       <Header />
 
       <div className="main-wrapper">
-        <div className="breadcrumb-bar">
-          <h2>CENTRES OF ACADEMIC EXCELLENCE</h2>
-        </div>
-
         <div className="content-grid">
           <div className="main-col">
+            <div className="breadcrumb-bar centres-heading">
+              <h2>CENTRES OF ACADEMIC EXCELLENCE</h2>
+            </div>
             {/* Faculty Card */}
             <div className="faculty-card">
               <div className="profile-side">
@@ -1108,7 +1157,8 @@ const Centres = () => {
                   marginBottom: "18px",
                   padding: "14px 18px",
                   borderRadius: "12px",
-                  background: "linear-gradient(135deg, #fff7f8 0%, #f7fafc 100%)",
+                  background:
+                    "linear-gradient(135deg, #fff7f8 0%, #f7fafc 100%)",
                   border: "1px solid #ead7de",
                   color: "#7a1635",
                   fontSize: "15px",
@@ -1116,8 +1166,7 @@ const Centres = () => {
                   lineHeight: "1.6",
                 }}
               >
-                If you want to know more details about this centre and the
-                projects, contact the profiles below.
+                FACULTY MEMBERS OF THE CENTRE
               </div>
               <div className="team-grid">
                 {teamProfiles.slice(0, 4).map((profile) => (
@@ -1186,91 +1235,47 @@ const Centres = () => {
                 </button>
               )}
             </div>
-            <div className="facilities-cards">
-              {/* Synthesis Facilities */}
-              <div className="facility-card-main">
-                <h4>Synthesis Facilities</h4>
-
-                {synthesisFacilities.map((f) => (
+            <div className="facilities-section-main">
+              <div className="facilities-cards">
+                {facilityCards.map((card) => (
                   <div
-                    key={f.id}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: 6,
-                    }}
+                    key={card.id}
+                    className="facility-card-main"
+                    onClick={() =>
+                      card.link && window.open(card.link, "_blank")
+                    }
+                    style={{ cursor: card.link ? "pointer" : "default" }}
                   >
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                      }}
-                    >
-                      <Check size={16} color="#2f855a" />
-                      {f.facilityName}
-                    </span>
-
-                    {/* {isAdmin && (
-                      <button
+                    {card.image ? (
+                      <div
                         style={{
-                          color: "red",
-                          border: "none",
-                          background: "none",
-                          cursor: "pointer",
-                        }}
-                        onClick={async () => {
-                          await facilityService.deleteFacility(f.id);
-                          fetchFacilities();
+                          width: "100%",
+                          height: 120,
+                          borderRadius: 8,
+                          overflow: "hidden",
+                          marginBottom: 12,
+                          background: "#f8f9fa",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                         }}
                       >
-                        ✕
-                      </button>
-                    )} */}
-                  </div>
-                ))}
-              </div>
-
-              {/* Characterization Facilities */}
-              <div className="facility-card-main">
-                <h4>Characterization Facilities</h4>
-
-                {characterizationFacilities.map((f) => (
-                  <div
-                    key={f.id}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: 6,
-                    }}
-                  >
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                      }}
-                    >
-                      <Check size={16} color="#2f855a" />
-                      {f.facilityName}
-                    </span>
-
-                    {/* {isAdmin && (
-                      <button
-                        style={{
-                          color: "red",
-                          border: "none",
-                          background: "none",
-                          cursor: "pointer",
-                        }}
-                        onClick={async () => {
-                          await facilityService.deleteFacility(f.id);
-                          fetchFacilities();
-                        }}
-                      >
-                        ✕
-                      </button>
-                    )} */}
+                        <img
+                          src={card.image}
+                          alt={card.title}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "contain",
+                            objectPosition: "center",
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <span className="facility-icon">{card.icon}</span>
+                    )}
+                    <h4>{card.title}</h4>
+                    <p>{card.description}</p>
                   </div>
                 ))}
               </div>
@@ -1289,7 +1294,7 @@ const Centres = () => {
                 projects
                   .filter((proj) => proj.projectStatus === "ONGOING")
                   .map((proj) => (
-                    <div key={proj.projectId} className="project-card">
+                    <div key={proj.projectId} className="project-card" onClick={() => navigate(`/project/${proj.projectId}`)} style={{ cursor: "pointer" }}>
                       <div className="project-img-box">
                         <img src={proj.imageUrl} alt={proj.title} />
                       </div>
@@ -1324,37 +1329,21 @@ const Centres = () => {
                               </span>
                             </p>
                           </div>
-                          <Heart size={20} className="heart-icon" />
+                          
                         </div>
                         <div
                           style={{
                             display: "flex",
                             gap: "10px",
                             marginTop: "12px",
+                            alignItems: "center",
                           }}
                         >
-                          <button
-                            className="view-more-link"
-                            style={{ position: "static" }}
-                            onClick={() =>
-                              navigate(`/project/${proj.projectId}`)
-                            }
-                          >
-                            View More →
-                          </button>
-
                           {isAdmin && proj.projectStatus !== "COMPLETED" && (
                             <button
-                              style={{
-                                padding: "6px 12px",
-                                borderRadius: "6px",
-                                border: "none",
-                                background: "#2f855a",
-                                color: "white",
-                                fontSize: "12px",
-                                cursor: "pointer",
-                              }}
-                              onClick={async () => {
+                              className="mark-completed-btn"
+                              onClick={async (e) => {
+                                e.stopPropagation();
                                 try {
                                   await projectService.markProjectCompleted(
                                     proj.projectId,
@@ -1374,6 +1363,7 @@ const Centres = () => {
                   ))
               )}
             </div>
+            {/* completed projects */}
             <div className="breadcrumb-bar">
               <h2>COMPLETED PROJECTS</h2>
             </div>
@@ -1386,7 +1376,7 @@ const Centres = () => {
                 projects
                   .filter((proj) => proj.projectStatus === "COMPLETED")
                   .map((proj) => (
-                    <div key={proj.projectId} className="project-card">
+                    <div key={proj.projectId} className="project-card" onClick={() => navigate(`/project/${proj.projectId}`)} style={{ cursor: "pointer" }}>
                       <div className="project-img-box">
                         <img src={proj.imageUrl} alt={proj.title} />
                       </div>
@@ -1421,37 +1411,21 @@ const Centres = () => {
                               </span>
                             </p>
                           </div>
-                          <Heart size={20} className="heart-icon" />
+                          
                         </div>
                         <div
                           style={{
                             display: "flex",
                             gap: "10px",
                             marginTop: "12px",
+                            alignItems: "center",
                           }}
                         >
-                          <button
-                            className="view-more-link"
-                            style={{ position: "static" }}
-                            onClick={() =>
-                              navigate(`/project/${proj.projectId}`)
-                            }
-                          >
-                            View More →
-                          </button>
-
                           {isAdmin && proj.projectStatus !== "COMPLETED" && (
                             <button
-                              style={{
-                                padding: "6px 12px",
-                                borderRadius: "6px",
-                                border: "none",
-                                background: "#2f855a",
-                                color: "white",
-                                fontSize: "12px",
-                                cursor: "pointer",
-                              }}
-                              onClick={async () => {
+                              className="mark-completed-btn"
+                              onClick={async (e) => {
+                                e.stopPropagation();
                                 try {
                                   await projectService.markProjectCompleted(
                                     proj.projectId,
@@ -1638,8 +1612,8 @@ const AddFacilityDialog = ({ onClose, onSave }) => {
             onChange={(e) => setType(e.target.value)}
           >
             <option value="NORMAL">Normal</option>
-            <option value="SYNTHESIS">Synthesis</option>
-            <option value="CHARACTERIZATION">Characterization</option>
+            <option value="NORMAL">Synthesis</option>
+            <option value="NORMAL">Characterization</option>
           </select>
         </div>
 
@@ -1657,3 +1631,4 @@ const AddFacilityDialog = ({ onClose, onSave }) => {
   );
 };
 export default Centres;
+

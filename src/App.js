@@ -18,6 +18,7 @@ import Application from "./Application.js";
 import Projects from "./Projects.js";
 import About from "./about.js";
 import StudentRequests from "./StudentRequests.js";
+import Students from "./Students.js";
 function App() {
   return (
     <div className="App">
@@ -33,6 +34,7 @@ function App() {
               <Route path="/application" element={<Application />}></Route>
               <Route path="/about" element={<About />}></Route>
               <Route path="/projects" element={<Projects />}></Route>
+              <Route path="/students" element={<Students />}></Route>
               <Route path="/profile" element={<Profile />}></Route>
               <Route path="/student/:registerNo" element={<Profile />} />
               <Route path="/profile/:registerNo" element={<AdminProfile />} />

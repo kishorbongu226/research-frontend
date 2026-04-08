@@ -12,65 +12,32 @@ function Loginpage() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setMessage("");
-
     if (!userID || !password || !role) {
       setError("⚠️ All fields are required.");
       return;
     }
 
     try {
-      // Create Basic Auth header
-      const basicAuth = "Basic " + btoa(`${userID}:${password}`);
-
-      // Test login by hitting a protected endpoint
-      const response = await axios.get(
-        "https://sathyabamaresearchprojects.co.in/api/v1.0/centers", // any protected endpoint
+      const response = await axios.post(
+        "https://sathyabamaresearchprojects.co.in/api/v1.0/auth/login",
         {
-          headers: { Authorization: basicAuth },
+          userID,
+          password,
+          role,
+        },
+        {
           validateStatus: () => true,
         },
       );
 
       if (response.status === 200) {
-        if (role === "Admin") {
-          const adminCheck = await axios.get(
-            "https://sathyabamaresearchprojects.co.in/api/v1.0/admins/${encodeURIComponent(userID)}",
-            {
-              headers: { Authorization: basicAuth },
-              validateStatus: () => true,
-            },
-          );
-
-          if (adminCheck.status !== 200) {
-            setError("This account is not authorized as Admin.");
-            return;
-          }
-        }
-
-        if (role === "End-User") {
-          const studentCheck = await axios.get(
-            `https://sathyabamaresearchprojects.co.in/api/v1.0/student/profile/${userID}`,
-            {
-              headers: { Authorization: basicAuth },
-              validateStatus: () => true,
-            },
-          );
-
-          if (studentCheck.status !== 200) {
-            setError("This account is not authorized as Student.");
-            return;
-          }
-        }
-
-        setMessage("Login successful! Redirecting...");
+        const basicAuth = "Basic " + btoa(`${userID}:${password}`);
 
         // Save credentials safely in sessionStorage
         sessionStorage.setItem(
@@ -97,16 +64,14 @@ function Loginpage() {
         );
 
         // Redirect based on role
-        setTimeout(() => {
-          switch (role) {
-            case "Admin":
-              navigate("/dashboard");
-              break;
+        switch (role) {
+          case "Admin":
+            navigate("/dashboard");
+            break;
 
-            default:
-              navigate("/dashboard");
-          }
-        }, 500);
+          default:
+            navigate("/dashboard");
+        }
       } else if (response.status === 401) {
         setError("⚠️ Invalid username or password.");
       } else if (response.status === 403) {
@@ -144,8 +109,6 @@ function Loginpage() {
         <h2 className="form-title">Management System</h2>
 
         {error && <p className="error-message">{error}</p>}
-        {message && <p className="success-message">{message}</p>}
-
         <form onSubmit={handleSubmit}>
           <div className="input-group">
             <label>Role</label>
@@ -201,4 +164,3 @@ function Loginpage() {
 }
 
 export default Loginpage;
-

@@ -32,7 +32,7 @@ function Loginpage() {
 
       // Test login by hitting a protected endpoint
       const response = await axios.get(
-        "http://localhost:8080/api/v1.0/centers", // any protected endpoint
+        "https://sathyabamaresearchprojects.co.in/api/v1.0/centers", // any protected endpoint
         {
           headers: { Authorization: basicAuth },
           validateStatus: () => true,
@@ -42,7 +42,7 @@ function Loginpage() {
       if (response.status === 200) {
         if (role === "Admin") {
           const adminCheck = await axios.get(
-            "http://localhost:8080/api/v1.0/admins",
+            "https://sathyabamaresearchprojects.co.in/api/v1.0/admins/${encodeURIComponent(userID)}",
             {
               headers: { Authorization: basicAuth },
               validateStatus: () => true,
@@ -57,7 +57,7 @@ function Loginpage() {
 
         if (role === "End-User") {
           const studentCheck = await axios.get(
-            `http://localhost:8080/api/v1.0/student/profile/${userID}`,
+            `https://sathyabamaresearchprojects.co.in/api/v1.0/student/profile/${userID}`,
             {
               headers: { Authorization: basicAuth },
               validateStatus: () => true,
